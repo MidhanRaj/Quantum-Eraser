@@ -1,0 +1,6 @@
+pywebview
+qiskit
+qiskit-ibm-runtime
+cryptography
+pqcrypto
+python-dotenv

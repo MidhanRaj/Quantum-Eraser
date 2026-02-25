@@ -1,0 +1,14 @@
+.env
+ibm_token.txt
+__pycache__/
+*.pyc
+wipe_log.enc
+wipe_log.log
+Wipe_Report_*.json
+debug_*.txt
+debug_result.json
+results.txt
+test_output.txt
+test_results.txt
+final_results.txt
+[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]
