@@ -7,6 +7,15 @@ let navigationStack = [];
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 window.addEventListener('pywebviewready', () => {
+    // Check if wallet is already connected (e.g. backend persist)
+    window.pywebview.api.is_wallet_connected().then(connected => {
+        if (connected) {
+            unlockApp();
+        } else {
+            document.getElementById('wallet-overlay').style.display = 'flex';
+        }
+    });
+
     refreshDrives();
     refreshQRNGStatus();
     checkAdminStatus();
@@ -33,6 +42,80 @@ function checkAdminStatus() {
 
 function relaunchAsAdmin() {
     window.pywebview.api.relaunch_as_admin();
+}
+
+// ─── Wallet & Blockchain ───────────────────────────────────────────────────────
+function connectNewWallet() {
+    window.pywebview.api.connect_wallet().then(res => {
+        if (res.status === 'success') {
+            onWalletConnected(res.address);
+        }
+    });
+}
+
+function connectActualMetaMask() {
+    setStatus("🚀 Opening MetaMask bridge in your system browser...");
+    window.pywebview.api.connect_metamask().then(res => {
+        // Backend will call onWalletConnected once browser callback arrives
+    });
+}
+
+function connectExistingWallet() {
+    const key = document.getElementById('wallet-key').value;
+    if (!key) return alert("Please enter a private key.");
+
+    window.pywebview.api.connect_wallet(key).then(res => {
+        if (res.status === 'success') {
+            onWalletConnected(res.address);
+        } else {
+            alert("Error: " + res.message);
+        }
+    });
+}
+
+function onWalletConnected(address) {
+    document.getElementById('wallet-overlay').style.display = 'none';
+    const badge = document.getElementById('wallet-badge');
+    badge.classList.add('connected');
+    document.getElementById('wallet-addr').textContent = address.substring(0, 10) + "...";
+    setStatus("✅ Wallet Connected: " + address);
+}
+
+function showWalletModal() {
+    // Just toggle info or show disconnect? For now, just show address
+    alert("Connected Address:\n" + document.getElementById('wallet-addr').textContent);
+}
+
+function unlockApp() {
+    document.getElementById('wallet-overlay').style.display = 'none';
+    // Fetch address if it's already connected in backend but UI doesn't know
+    // (Simpler to just re-run connect if needed, but we'll assume fresh start)
+}
+
+function showBlockchainLedger() {
+    const modal = document.getElementById('blockchain-modal');
+    modal.style.display = 'flex';
+    const tbody = document.getElementById('blockchain-tbody');
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Fetching immutable records...</td></tr>';
+
+    window.pywebview.api.get_blockchain_logs().then(logs => {
+        if (!logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No records found on-chain.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = logs.map(log => `
+            <tr>
+                <td>${escapeHtml(log.file)}</td>
+                <td>${new Date(log.time).toLocaleString()}</td>
+                <td style="font-family:var(--font-mono); font-size:0.75rem; color:var(--primary);">${log.tx}</td>
+            </tr>
+        `).join('');
+    });
+}
+
+function closeBlockchainModal() {
+    document.getElementById('blockchain-modal').style.display = 'none';
 }
 
 // ─── QRNG Status Badge ────────────────────────────────────────────────────────
@@ -351,6 +434,12 @@ function showAuditLogInfo() {
 
 function setStatus(msg) {
     document.getElementById('status').innerText = msg;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ─── Phase 6: Hex/Data Inspector ──────────────────────────────────────────────

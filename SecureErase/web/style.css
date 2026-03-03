@@ -1,28 +1,38 @@
 :root {
     /* Main Dark Theme (Based on charcoal/lavender/bronze image) */
-    --bg-dark: #0d0d0f;                 /* Deep charcoal/black from the image */
-    --bg-panel: rgba(26, 26, 29, 0.95); /* Slightly lifted dark grey for cards */
-    
+    --bg-dark: #0d0d0f;
+    /* Deep charcoal/black from the image */
+    --bg-panel: rgba(26, 26, 29, 0.95);
+    /* Slightly lifted dark grey for cards */
+
     /* Primary / Accent Tones (Lavender) */
-    --primary: #9d8df1;                 /* The soft lavender for the Title and Scan */
+    --primary: #9d8df1;
+    /* The soft lavender for the Title and Scan */
     --primary-dim: rgba(157, 141, 241, 0.12);
     --primary-glow: rgba(157, 141, 241, 0.3);
-    
+
     /* Warning / Wipe Tones (Bronze) */
-    --danger: #c5a88a;                  /* Bronze/Tan for Wipe and Admin Warning */
+    --danger: #c5a88a;
+    /* Bronze/Tan for Wipe and Admin Warning */
     --danger-dim: rgba(197, 168, 138, 0.12);
-    --risk-high: #c5a88a;               /* Bronze for critical risks */
-    --danger-glow: rgba(197, 168, 138, 0.4); /* Used for that outer glow on the Wipe button */
+    --risk-high: #c5a88a;
+    /* Bronze for critical risks */
+    --danger-glow: rgba(197, 168, 138, 0.4);
+    /* Used for that outer glow on the Wipe button */
 
     /* Navigation & Utility (Deep Purples) */
-    --scan: #7a6cc0;                    /* Mid-purple for Scan Sensitive */
+    --scan: #7a6cc0;
+    /* Mid-purple for Scan Sensitive */
     --scan-dim: rgba(122, 108, 192, 0.15);
-    --risk-medium: #8d8da3;             /* Muted blue-grey for secondary risks */
-    
+    --risk-medium: #8d8da3;
+    /* Muted blue-grey for secondary risks */
+
     /* Typography */
-    --text-main: #d1d1d6;               /* Light grey for readability */
-    --text-muted: #6b6b75;              /* Darker grey for secondary labels */
-    
+    --text-main: #d1d1d6;
+    /* Light grey for readability */
+    --text-muted: #6b6b75;
+    /* Darker grey for secondary labels */
+
     /* Font Definitions */
     --font-heading: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     --font-mono: 'Consolas', 'Monaco', monospace;
@@ -45,8 +55,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    letter-spacing: 0.3px; /* Added from your earlier polish for better typography */
-    
+    letter-spacing: 0.3px;
+    /* Added from your earlier polish for better typography */
+
     /* Updated background gradients to match the bronze/lavender theme */
     background-image:
         /* Subtle lavender glow in the top-left */
@@ -67,6 +78,12 @@ body {
     margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 10px;
+}
+
+.header-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
 }
 
 h1 {
@@ -96,7 +113,8 @@ h1 {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(157, 141, 241, 0.05); /* Soft lavender tint */
+    background: rgba(157, 141, 241, 0.05);
+    /* Soft lavender tint */
     border: 1px solid rgba(157, 141, 241, 0.2);
     border-radius: 20px;
     padding: 6px 14px;
@@ -111,7 +129,8 @@ h1 {
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: #333; /* Darker base for the "off" state */
+    background: #333;
+    /* Darker base for the "off" state */
     flex-shrink: 0;
     transition: background 0.4s, box-shadow 0.4s;
 }
@@ -119,49 +138,86 @@ h1 {
 .qbadge-dot.connected {
     background: var(--primary);
     box-shadow: 0 0 10px var(--primary-glow);
-    animation: pulse-lavender 2s ease infinite; /* Renamed to match theme */
+    animation: pulse-lavender 2s ease infinite;
+    /* Renamed to match theme */
 }
 
 .qbadge-dot.fallback {
-    background: var(--risk-medium); /* Muted blue-grey */
+    background: var(--risk-medium);
+    /* Muted blue-grey */
     box-shadow: 0 0 6px rgba(141, 141, 163, 0.5);
 }
 
 @keyframes pulse-lavender {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 0 6px var(--primary-glow);
     }
+
     50% {
         box-shadow: 0 0 16px var(--primary-glow);
     }
+}
+
+/* ─── Wallet Badge ─────────────────────────────────────────────────────────── */
+.wallet-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 200, 100, 0.05);
+    border: 1px solid rgba(0, 200, 100, 0.2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    font-family: var(--font-mono);
+    color: #00c864;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wallet-badge:hover {
+    background: rgba(0, 200, 100, 0.1);
+    border-color: rgba(0, 200, 100, 0.4);
+    box-shadow: 0 0 12px rgba(0, 200, 100, 0.2);
+}
+
+.wallet-badge.connected {
+    background: rgba(0, 200, 100, 0.1);
+    border-color: #00c864;
+    box-shadow: 0 0 10px rgba(0, 200, 100, 0.3);
 }
 
 /* ─── Admin Banner ─────────────────────────────────────────────────────────── */
 .admin-banner {
     width: 100%;
     max-width: 900px;
-    background: var(--danger-dim); /* Soft bronze background */
-    color: var(--risk-high);       /* Bronze text */
-    border: 1px solid rgba(197, 168, 138, 0.3); /* Bronze border */
+    background: var(--danger-dim);
+    /* Soft bronze background */
+    color: var(--risk-high);
+    /* Bronze text */
+    border: 1px solid rgba(197, 168, 138, 0.3);
+    /* Bronze border */
     padding: 10px 16px;
     border-radius: 8px;
     font-size: 0.88rem;
     margin-bottom: 5px;
-    
+
     /* Layout Properties */
     display: flex;
     align-items: center;
-    justify-content: space-between; 
+    justify-content: space-between;
     gap: 12px;
-    flex-wrap: wrap; 
-    
+    flex-wrap: wrap;
+
     animation: fadeIn 0.3s ease;
 }
 
 .admin-text {
     display: flex;
     align-items: center;
-    gap: 10px; /* Slightly wider gap for the warning icon */
+    gap: 10px;
+    /* Slightly wider gap for the warning icon */
     flex: 1;
     min-width: 220px;
 }
@@ -177,7 +233,8 @@ h1 {
 
 .admin-btn:hover {
     background: var(--danger) !important;
-    color: #121214 !important; /* Dark text on hover */
+    color: #121214 !important;
+    /* Dark text on hover */
 }
 
 /* ─── Container ────────────────────────────────────────────────────────────── */
@@ -191,32 +248,39 @@ h1 {
 
 /* ─── Cards ────────────────────────────────────────────────────────────────── */
 .card {
-    background: var(--bg-panel); /* Deep grey-purple/charcoal */
-    backdrop-filter: blur(14px); /* Slightly stronger blur for premium look */
-    border: 1px solid rgba(157, 141, 241, 0.08); /* Subtle lavender border instead of white */
+    background: var(--bg-panel);
+    /* Deep grey-purple/charcoal */
+    backdrop-filter: blur(14px);
+    /* Slightly stronger blur for premium look */
+    border: 1px solid rgba(157, 141, 241, 0.08);
+    /* Subtle lavender border instead of white */
     border-radius: 14px;
     padding: 20px;
-    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7); /* Deeper shadow for elevation */
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7);
+    /* Deeper shadow for elevation */
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
-    border-color: rgba(157, 141, 241, 0.15); /* Lavender glow on hover */
+    border-color: rgba(157, 141, 241, 0.15);
+    /* Lavender glow on hover */
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
 }
 
 /* Updated Danger Zone (Removed Red) */
 .danger-zone {
     /* Uses your Bronze theme (--danger) instead of the old bright red */
-    border: 1px solid rgba(197, 168, 138, 0.3); 
+    border: 1px solid rgba(197, 168, 138, 0.3);
     background: linear-gradient(135deg, rgba(197, 168, 138, 0.04), transparent);
     border-radius: 12px;
 }
+
 /* ─── Inputs / Selects ─────────────────────────────────────────────────────── */
 input[type="text"],
 select {
     background: rgba(0, 0, 0, 0.4);
-    border: 1px solid #2a2a2e; /* Neutral dark border */
+    border: 1px solid #2a2a2e;
+    /* Neutral dark border */
     color: var(--text-main);
     padding: 10px 14px;
     border-radius: 7px;
@@ -227,7 +291,8 @@ select {
 
 input[type="text"]:focus,
 select:focus {
-    border-color: var(--primary); /* Lavender focus */
+    border-color: var(--primary);
+    /* Lavender focus */
     box-shadow: 0 0 10px var(--primary-dim);
 }
 
@@ -256,7 +321,8 @@ button:hover {
 /* Primary Button (Lavender) */
 button.btn-primary {
     background: linear-gradient(135deg, #7a6cc0, var(--primary));
-    color: #121214; /* Dark text for contrast */
+    color: #121214;
+    /* Dark text for contrast */
     border: none;
     box-shadow: 0 4px 12px var(--primary-dim);
 }
@@ -270,7 +336,8 @@ button.btn-primary:hover {
 /* Danger/Wipe Button (Bronze) */
 button.btn-danger {
     background: linear-gradient(135deg, #8e7a63, var(--danger));
-    color: #121214; /* Dark text as seen in your reference images */
+    color: #121214;
+    /* Dark text as seen in your reference images */
     border: none;
     font-weight: 700;
 }
@@ -331,8 +398,9 @@ button.btn-sm {
     color: var(--text-muted);
     font-size: 0.85rem;
 }
+
 /* Normal action buttons */
-.storage-controls > button {
+.storage-controls>button {
     height: 42px;
 }
 
@@ -340,9 +408,11 @@ button.btn-sm {
 .danger-zone-ui {
     display: flex;
     gap: 12px;
-    padding: 0; /* Removed padding to let them sit flush as seen in your reference */
+    padding: 0;
+    /* Removed padding to let them sit flush as seen in your reference */
     align-items: center;
-    border: none !important; /* Ensuring no red outline remains */
+    border: none !important;
+    /* Ensuring no red outline remains */
     background: none !important;
 }
 
@@ -369,17 +439,21 @@ button.btn-sm {
 }
 
 .legend-dot.high {
-    background: var(--risk-high); /* Bronze */
-    box-shadow: 0 0 8px var(--danger-glow); /* Soft bronze glow */
+    background: var(--risk-high);
+    /* Bronze */
+    box-shadow: 0 0 8px var(--danger-glow);
+    /* Soft bronze glow */
 }
 
 .legend-dot.medium {
-    background: var(--risk-medium); /* Muted blue-grey */
+    background: var(--risk-medium);
+    /* Muted blue-grey */
     box-shadow: 0 0 6px rgba(141, 141, 163, 0.4);
 }
 
 .legend-dot.safe {
-    background: #2a2a2e; /* Very dark grey to match the table background */
+    background: #2a2a2e;
+    /* Very dark grey to match the table background */
     border: 1px solid #444;
 }
 
@@ -465,9 +539,12 @@ button.btn-sm {
 }
 
 @keyframes pulse-bronze {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 0 4px rgba(197, 168, 138, 0.2);
     }
+
     50% {
         box-shadow: 0 0 10px rgba(197, 168, 138, 0.5);
     }
@@ -484,8 +561,10 @@ button.btn-sm {
 #status {
     font-family: var(--font-mono);
     font-size: 0.88rem;
-    color: var(--primary); /* Lavender text */
-    background: #08080a;    /* Near-black background */
+    color: var(--primary);
+    /* Lavender text */
+    background: #08080a;
+    /* Near-black background */
     padding: 14px 16px;
     border-radius: 10px;
     border: 1px solid #1c1c1f;
@@ -494,16 +573,16 @@ button.btn-sm {
     white-space: pre-wrap;
     word-break: break-all;
     /* Added a subtle lavender glow to the background as seen in your reference */
-    background: linear-gradient(
-        135deg,
-        rgba(157, 141, 241, 0.05),
-        rgba(0, 0, 0, 0.6)
-    );
+    background: linear-gradient(135deg,
+            rgba(157, 141, 241, 0.05),
+            rgba(0, 0, 0, 0.6));
 }
+
 /* ─── Loading / Empty ──────────────────────────────────────────────────────── */
 .loading-msg {
     text-align: center;
-    color: var(--text-muted); /* Muted blue-grey labels */
+    color: var(--text-muted);
+    /* Muted blue-grey labels */
     padding: 30px;
     font-size: 0.9rem;
 }
@@ -513,16 +592,20 @@ button.btn-sm {
     position: fixed;
     z-index: 200;
     inset: 0;
-    background: rgba(13, 13, 15, 0.9); /* Darker, desaturated background */
-    backdrop-filter: blur(6px); /* Stronger blur to match reference images */
+    background: rgba(13, 13, 15, 0.9);
+    /* Darker, desaturated background */
+    backdrop-filter: blur(6px);
+    /* Stronger blur to match reference images */
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .modal-box {
-    background: var(--bg-panel); /* Deep grey-purple panel */
-    border: 1px solid rgba(157, 141, 241, 0.2); /* Subtle lavender border */
+    background: var(--bg-panel);
+    /* Deep grey-purple panel */
+    border: 1px solid rgba(157, 141, 241, 0.2);
+    /* Subtle lavender border */
     border-radius: 14px;
     padding: 24px;
     width: 82%;
@@ -530,20 +613,23 @@ button.btn-sm {
     color: var(--text-main);
     max-height: 85vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8); /* Stronger shadow for depth */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    /* Stronger shadow for depth */
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(157, 141, 241, 0.1); /* Lavender divider */
+    border-bottom: 1px solid rgba(157, 141, 241, 0.1);
+    /* Lavender divider */
     padding-bottom: 12px;
     margin-bottom: 10px;
 }
 
 .modal-header h2 {
-    color: var(--primary); /* Lavender header text */
+    color: var(--primary);
+    /* Lavender header text */
     font-size: 1.4rem;
     margin: 0;
 }
@@ -562,7 +648,8 @@ button.btn-sm {
 }
 
 .modal-close:hover {
-    color: var(--primary); /* Glows lavender on hover */
+    color: var(--primary);
+    /* Glows lavender on hover */
     transform: none;
 }
 
@@ -570,7 +657,8 @@ button.btn-sm {
 .file-icon {
     font-size: 1rem;
     flex-shrink: 0;
-    color: var(--primary-dim); /* Soft lavender tint for icons */
+    color: var(--primary-dim);
+    /* Soft lavender tint for icons */
 }
 
 /* ─── Scrollbar ────────────────────────────────────────────────────────────── */
@@ -579,16 +667,19 @@ button.btn-sm {
 }
 
 ::-webkit-scrollbar-track {
-    background: #0d0d0f; /* Matched to var(--bg-dark) */
+    background: #0d0d0f;
+    /* Matched to var(--bg-dark) */
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #2a2a2e; /* Muted charcoal */
+    background: #2a2a2e;
+    /* Muted charcoal */
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--primary); /* Lavender glow on hover */
+    background: var(--primary);
+    /* Lavender glow on hover */
 }
 
 /* ─── Breadcrumb & Explorer ────────────────────────────────────────────────── */
@@ -597,7 +688,8 @@ button.btn-sm {
     align-items: center;
     gap: 4px;
     padding: 8px 12px;
-    background: rgba(157, 141, 241, 0.05); /* Soft lavender tint */
+    background: rgba(157, 141, 241, 0.05);
+    /* Soft lavender tint */
     border: 1px solid rgba(157, 141, 241, 0.1);
     border-radius: 6px;
     margin-bottom: 10px;
@@ -607,7 +699,8 @@ button.btn-sm {
 
 .crumb {
     cursor: pointer;
-    color: var(--primary); /* Lavender text */
+    color: var(--primary);
+    /* Lavender text */
     font-weight: 600;
 }
 
@@ -618,7 +711,8 @@ button.btn-sm {
 
 /* ─── File Table Polish ────────────────────────────────────── */
 .explorer-wrapper {
-    overflow-x: auto; /* Adds horizontal scroll if window is too small */
+    overflow-x: auto;
+    /* Adds horizontal scroll if window is too small */
     overflow-y: auto;
     max-height: 420px;
     border: 1px solid #1c1c1f;
@@ -629,15 +723,36 @@ button.btn-sm {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.88rem;
-    table-layout: fixed; /* Prevents columns from squishing together */
+    table-layout: fixed;
+    /* Prevents columns from squishing together */
 }
 
 /* Define specific widths to prevent columns from merging */
-.file-table th:nth-child(1) { width: 45px; }   /* Checkbox */
-.file-table th:nth-child(2) { width: 40%; }    /* Name */
-.file-table th:nth-child(3) { width: 15%; }    /* Type */
-.file-table th:nth-child(4) { width: 15%; }    /* Size */
-.file-table th:nth-child(5) { width: 25%; }    /* Risk */
+.file-table th:nth-child(1) {
+    width: 45px;
+}
+
+/* Checkbox */
+.file-table th:nth-child(2) {
+    width: 40%;
+}
+
+/* Name */
+.file-table th:nth-child(3) {
+    width: 15%;
+}
+
+/* Type */
+.file-table th:nth-child(4) {
+    width: 15%;
+}
+
+/* Size */
+.file-table th:nth-child(5) {
+    width: 25%;
+}
+
+/* Risk */
 
 .file-table th {
     padding: 12px;
@@ -651,7 +766,8 @@ button.btn-sm {
     padding: 10px 12px;
     vertical-align: middle;
     overflow: hidden;
-    text-overflow: ellipsis; /* Truncates long names with ... */
+    text-overflow: ellipsis;
+    /* Truncates long names with ... */
     white-space: nowrap;
 }
 
@@ -667,7 +783,8 @@ button.btn-sm {
 .file-table thead {
     position: sticky;
     top: 0;
-    background: #16161a; /* Darker header background */
+    background: #16161a;
+    /* Darker header background */
     z-index: 1;
 }
 
@@ -683,16 +800,19 @@ button.btn-sm {
 }
 
 .file-row:hover {
-    background: rgba(157, 141, 241, 0.03); /* Subtle lavender hover row */
+    background: rgba(157, 141, 241, 0.03);
+    /* Subtle lavender hover row */
 }
 
 /* ─── Risk Row Highlights ──────────────────────────────────────────────────── */
 .risk-row-high {
-    background: rgba(197, 168, 138, 0.05); /* Bronze tint for rows */
+    background: rgba(197, 168, 138, 0.05);
+    /* Bronze tint for rows */
 }
 
 .risk-row-medium {
-    background: rgba(141, 141, 163, 0.05); /* Blue-grey tint for rows */
+    background: rgba(141, 141, 163, 0.05);
+    /* Blue-grey tint for rows */
 }
 
 /* ─── Risk Pills (Removing Red/Green) ──────────────────────────────────────── */
@@ -705,19 +825,23 @@ button.btn-sm {
 
 .risk-pill.high {
     background: rgba(197, 168, 138, 0.2);
-    color: var(--risk-high); /* Bronze */
+    color: var(--risk-high);
+    /* Bronze */
 }
 
 .risk-pill.medium {
     background: rgba(141, 141, 163, 0.2);
-    color: var(--risk-medium); /* Muted Blue-Grey */
+    color: var(--risk-medium);
+    /* Muted Blue-Grey */
 }
 
 .risk-pill.safe {
-    background: rgba(157, 141, 241, 0.1); /* Soft lavender for safe */
+    background: rgba(157, 141, 241, 0.1);
+    /* Soft lavender for safe */
     color: #a0a0b8;
     border: 1px solid rgba(157, 141, 241, 0.2);
 }
+
 /* ─── Wipe Progress Bar ────────────────────────────────────────────────────── */
 .progress-label {
     font-size: 0.82rem;
@@ -730,8 +854,10 @@ button.btn-sm {
 }
 
 .progress-track {
-    background: rgba(0, 0, 0, 0.6); /* Darker track for better contrast */
-    border: 1px solid #1c1c1f;    /* Neutral dark border */
+    background: rgba(0, 0, 0, 0.6);
+    /* Darker track for better contrast */
+    border: 1px solid #1c1c1f;
+    /* Neutral dark border */
     border-radius: 50px;
     height: 14px;
     overflow: hidden;
@@ -750,8 +876,13 @@ button.btn-sm {
 }
 
 @keyframes progress-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: 0% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: 0% 0;
+    }
 }
 
 .progress-meta {
@@ -780,25 +911,29 @@ button.btn-sm {
 .danger-zone-ui {
     display: flex;
     gap: 12px;
-    padding: 0; /* Sit flush as seen in your reference images */
+    padding: 0;
+    /* Sit flush as seen in your reference images */
     border-radius: 10px;
     /* Removed red gradients; sitting cleanly on the main card */
     background: none;
     border: none !important;
 }
+
 /* ─── Section Styling ───────────────────────────────────────── */
 .section {
     margin-top: 18px;
     padding: 14px;
     border-radius: 12px;
     background: rgba(0, 0, 0, 0.25);
-    border: 1px solid #1c1c1f; /* Desaturated charcoal border */
+    border: 1px solid #1c1c1f;
+    /* Desaturated charcoal border */
 }
 
 .section h3 {
     margin: 0 0 10px 0;
     font-size: 0.9rem;
-    color: var(--primary); /* Lavender text */
+    color: var(--primary);
+    /* Lavender text */
     letter-spacing: 1px;
     text-transform: uppercase;
 }
@@ -809,19 +944,20 @@ button.btn-sm {
 }
 
 .file-row:hover {
-    transform: scale(1.005); /* Subtle scale to maintain professional feel */
-    background: rgba(157, 141, 241, 0.03); /* Lavender row hover */
+    transform: scale(1.005);
+    /* Subtle scale to maintain professional feel */
+    background: rgba(157, 141, 241, 0.03);
+    /* Lavender row hover */
 }
 
 /* ─── Status Console Polish ────────────────────────────────── */
 #status {
     border-left: none;
     border-radius: 10px;
-    background: linear-gradient(
-        135deg,
-        rgba(157, 141, 241, 0.08), /* Soft Lavender tint instead of Cyan */
-        rgba(0, 0, 0, 0.6)
-    );
+    background: linear-gradient(135deg,
+            rgba(157, 141, 241, 0.08),
+            /* Soft Lavender tint instead of Cyan */
+            rgba(0, 0, 0, 0.6));
 }
 
 /* ─── Typography Polish ────────────────────────────────────── */
@@ -837,7 +973,8 @@ button {
 .app-lock {
     pointer-events: none;
     opacity: 0.6;
-    filter: grayscale(80%); /* Stronger grayscale to fit the desaturated theme */
+    filter: grayscale(80%);
+    /* Stronger grayscale to fit the desaturated theme */
 }
 
 .btn-scan {
@@ -845,7 +982,8 @@ button {
 }
 
 .storage-controls button:not(.btn-danger):not(.btn-scan) {
-    background: rgba(157, 141, 241, 0.04); /* Lavender-tinted background */
+    background: rgba(157, 141, 241, 0.04);
+    /* Lavender-tinted background */
 }
 
 .storage-controls button,
@@ -858,17 +996,21 @@ button {
 
 /* ─── Admin Warning Cleanup ─── */
 #admin-warning {
-    display: none; /* Removed !important to allow JS control */
+    display: none;
+    /* Removed !important to allow JS control */
     align-items: center;
     justify-content: space-between;
     gap: 14px;
     flex-wrap: wrap;
-    background: rgba(255, 34, 68, 0.12); /* Original Red-ish background */
-    border: 1px solid rgba(255, 34, 68, 0.4);   /* Original Red-ish border */
-    color: #ff5555;                             /* Original Red text */
+    background: rgba(255, 34, 68, 0.12);
+    /* Original Red-ish background */
+    border: 1px solid rgba(255, 34, 68, 0.4);
+    /* Original Red-ish border */
+    color: #ff5555;
+    /* Original Red text */
 }
 
-#admin-warning > div {
+#admin-warning>div {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -890,9 +1032,12 @@ button {
 .wipe-drive {
     margin-left: auto;
     height: 42px;
-    background: linear-gradient(135deg, #8e7a63, var(--danger)) !important; /* Bronze gradient */
-    box-shadow: 0 0 22px var(--danger-glow) !important; /* Bronze glow instead of Red */
-    color: #121214 !important; /* Dark text for contrast */
+    background: linear-gradient(135deg, #8e7a63, var(--danger)) !important;
+    /* Bronze gradient */
+    box-shadow: 0 0 22px var(--danger-glow) !important;
+    /* Bronze glow instead of Red */
+    color: #121214 !important;
+    /* Dark text for contrast */
 }
 
 /* ─── Removed Red Outline ─── */

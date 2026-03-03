@@ -21,26 +21,32 @@
                 </p>
             </div>
 
-            <div class="quantum-badge" id="quantum-status" title="QRNG Entropy Source">
-                <span class="qbadge-dot" id="qbadge-dot"></span>
-                <span id="qbadge-label">Checking QRNG...</span>
+            <div class="header-controls">
+                <div class="wallet-badge" id="wallet-badge" onclick="showWalletModal()" title="Blockchain Wallet">
+                    <i class="fas fa-wallet"></i>
+                    <span id="wallet-addr">Connect Wallet</span>
+                </div>
+                <div class="quantum-badge" id="quantum-status" title="QRNG Entropy Source">
+                    <span class="qbadge-dot" id="qbadge-dot"></span>
+                    <span id="qbadge-label">Checking QRNG...</span>
+                </div>
             </div>
         </div>
 
         <!-- Admin Warning -->
-     <div id="admin-warning" class="admin-banner" style="display:none;">
-    <div class="admin-text">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>
-            Warning: Running without Administrator privileges.
-            VSS Shadow Copy deletion will fail.
-        </span>
-    </div>
+        <div id="admin-warning" class="admin-banner" style="display:none;">
+            <div class="admin-text">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>
+                    Warning: Running without Administrator privileges.
+                    VSS Shadow Copy deletion will fail.
+                </span>
+            </div>
 
-    <button class="btn-sm btn-danger admin-btn" onclick="relaunchAsAdmin()">
-        <i class="fas fa-user-shield"></i> Relaunch as Admin
-    </button>
-</div>
+            <button class="btn-sm btn-danger admin-btn" onclick="relaunchAsAdmin()">
+                <i class="fas fa-user-shield"></i> Relaunch as Admin
+            </button>
+        </div>
 
         <!-- Main Card -->
         <div class="card">
@@ -74,15 +80,15 @@
                         </button>
 
                         <!-- Danger Zone -->
-                       <div class="danger-zone-ui">
-    <button class="btn-danger wipe-selected" onclick="startWipe()">
-        <i class="fas fa-trash-alt"></i> Wipe Selected
-    </button>
-</div>
+                        <div class="danger-zone-ui">
+                            <button class="btn-danger wipe-selected" onclick="startWipe()">
+                                <i class="fas fa-trash-alt"></i> Wipe Selected
+                            </button>
+                        </div>
 
-<button class="btn-danger wipe-drive" onclick="wipeSelectedDrive()">
-    <i class="fas fa-hdd"></i> Wipe Drive
-</button>
+                        <button class="btn-danger wipe-drive" onclick="wipeSelectedDrive()">
+                            <i class="fas fa-hdd"></i> Wipe Drive
+                        </button>
                     </div>
                 </div>
 
@@ -132,8 +138,12 @@
 
                     <div style="flex:1;"></div>
 
-                    <button class="btn-audit" onclick="showAuditLogInfo()">
-                        <i class="fas fa-clipboard-list"></i> Audit Log
+
+                    <button class="btn-audit" onclick="showBlockchainLedger()">
+                        <i class="fas fa-link"></i> Blockchain Ledger
+                    </button>
+                    <button class="btn-audit" onclick="showAuditLogInfo()" style="margin-left: 8px;">
+                        <i class="fas fa-clipboard-list"></i> PQC Log (Local)
                     </button>
                 </div>
             </div>
@@ -171,6 +181,74 @@
 
         </div><!-- end card -->
 
+        <!-- Blockchain Ledger Modal -->
+        <div id="blockchain-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h2 style="margin:0;"><i class="fas fa-link"></i> Immutable Blockchain Ledger</h2>
+                    <button onclick="closeBlockchainModal()" class="modal-close">&times;</button>
+                </div>
+                <div id="blockchain-content" style="margin-top:15px; max-height: 400px; overflow-y: auto;">
+                    <table class="file-table">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Deletion Time</th>
+                                <th>TX Hash</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blockchain-tbody">
+                            <!-- Logs will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:right; margin-top:20px;">
+                    <button onclick="closeBlockchainModal()" class="btn-primary">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Connection Overlay -->
+        <div id="wallet-overlay" class="modal-overlay" style="display:flex; z-index: 1000;">
+            <div class="modal-box" style="max-width: 450px; text-align: center;">
+                <div class="modal-header" style="justify-content: center; border: none;">
+                    <h2 style="margin:0;"><i class="fas fa-wallet"></i> Connect Required</h2>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 25px;">
+                    A blockchain-backed audit trail is mandatory for all data wipes.
+                    Please connect your quantum-secure sub-wallet to proceed.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn-primary" onclick="connectActualMetaMask()"
+                        style="background: #f6851b; color: white; border-color: #f6851b;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg"
+                            style="width: 20px; vertical-align: middle; margin-right: 8px;">
+                        Connect MetaMask Extension
+                    </button>
+                    <div style="margin: 5px 0; color: #444; position: relative;">
+                        <span
+                            style="background: var(--bg-panel); padding: 0 10px; z-index: 1; position: relative;">OR</span>
+                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #333;">
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="connectNewWallet()">
+                        <i class="fas fa-plus"></i> Create New Temporary Wallet
+                    </button>
+                    <div style="margin: 10px 0; color: #444; position: relative;">
+                        <span
+                            style="background: var(--bg-panel); padding: 0 10px; z-index: 1; position: relative;">OR</span>
+                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #333;">
+                        </div>
+                    </div>
+                    <input type="password" id="wallet-key" placeholder="Enter Private Key (Simulation)"
+                        style="width: 100%; text-align: center; border: 1px solid #444;">
+                    <button class="btn-primary" onclick="connectExistingWallet()">
+                        <i class="fas fa-plug"></i> Connect Existing
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Hex Inspection Modal -->
         <div id="hex-modal" class="modal-overlay" style="display:none;">
             <div class="modal-box">
@@ -187,4 +265,5 @@
 
         <script src="script.js"></script>
 </body>
+
 </html>

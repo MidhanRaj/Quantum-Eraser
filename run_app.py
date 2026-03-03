@@ -23,7 +23,8 @@ try:
         width=960,
         height=740,
     )
-    app.webview.start(debug=False)
+    api.window = window
+    app.webview.start(debug=True)
 except Exception:
     traceback.print_exc()
     input("Press Enter to exit...")

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MetaMask Bridge — EraseXpertz</title>
+    <style>
+        body {
+            background: #0a0a0c;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .card {
+            background: #16161a;
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+        }
+
+        h1 {
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #888;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #00cc6e;
+            transform: translateY(-2px);
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>MetaMask Bridge</h1>
+        <p>Connect your desktop MetaMask extension to authorize data erasure audit logs.</p>
+
+        <button id="connect-btn" class="btn">Connect MetaMask</button>
+
+        <div id="status" class="status">Waiting for connection...</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"
+        type="application/javascript"></script>
+    <script>
+        async function connect() {
+            const status = document.getElementById('status');
+            const btn = document.getElementById('connect-btn');
+
+            if (typeof ethers === 'undefined') {
+                status.innerText = "Error: ethers.js library failed to load. Check your internet connection.";
+                return;
+            }
+
+            if (typeof window.ethereum === 'undefined') {
+                status.innerText = "Error: MetaMask not detected in this browser.";
+                return;
+            }
+
+            try {
+                btn.innerText = "Connecting...";
+                btn.disabled = true;
+
+                // Request accounts
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const address = accounts[0];
+
+                status.innerText = "Wallet detected. Requesting signature...";
+
+                // Sign a challenge to verify identity
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const message = "Authorize EraseXpertz Secure Audit Log Integration\nTimestamp: " + new Date().toISOString();
+                const signature = await signer.signMessage(message);
+
+                status.innerText = "Verified! Transmitting to Desktop App...";
+
+                // Simple navigation callback to avoid any fetch/CORS issues
+                const callbackUrl = `${window.location.origin}/?address=${address}&sig=${signature}`;
+                console.log("Transmitting to:", callbackUrl);
+
+                // Direct navigation is the most reliable bridge
+                window.location.href = callbackUrl;
+            } catch (err) {
+                console.error("Bridge Error:", err);
+                status.innerText = "Error: " + err.message + " (Check if the desktop app is running)";
+                btn.innerText = "Retry Connection";
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('connect-btn').onclick = connect;
+    </script>
+</body>
+
+</html>
