@@ -24,7 +24,7 @@ function checkAdminStatus() {
     window.pywebview.api.check_admin().then(isAdmin => {
         const banner = document.getElementById('admin-warning');
         if (!isAdmin) {
-            banner.style.display = 'block';
+            banner.style.display = 'flex';
         } else {
             banner.style.display = 'none';
         }
@@ -130,7 +130,7 @@ function renderFileTable(files) {
             ? `<span class="risk-pill ${risk}">${risk === 'high' ? '🔴 HIGH' : '🟡 MED'}</span>`
             : '<span class="risk-pill safe">✅ Safe</span>';
         const rowClick = file.is_dir
-            ? `ondblclick="navigateTo('${file.path.replace(/\\/g, '\\\\')}')" style="cursor:pointer;"`
+            ? `ondblclick="navigateTo('${file.path.replace(/\\/g, '\\\\')}')\" style="cursor:pointer;"`
             : '';
 
         return `<tr class="file-row ${risk !== 'safe' ? 'risk-row-' + risk : ''}" ${rowClick}>
@@ -187,16 +187,34 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+// ⭐ UX ADDITION: Lock UI during critical operations (visual only)
+function lockUI(state) {
+    const card = document.querySelector('.card');
+    if (!card) return;
+
+    if (state) {
+        card.classList.add('app-lock');
+    } else {
+        card.classList.remove('app-lock');
+    }
+}
+
 // ─── Phase 4: Sensitive File Scanner ─────────────────────────────────────────
 function scanSensitive() {
     const path = currentPath;
-    if (!path) { alert('Please select a path first.'); return; }
+    if (!path) {
+        alert('Please select a path first.');
+        return;
+    }
 
-    setStatus('🔬 Scanning for sensitive files...');
+    setStatus('🔬 Scanning for sensitive files...', 'info');
+
     window.pywebview.api.scan_path(path).then(results => {
         renderFileTable(results);
-        setStatus(`🔬 Scan Complete: ${results.length} items scanned.`);
-    }).catch(e => setStatus('Scan error: ' + e));
+        setStatus(`🔬 Scan Complete: ${results.length} items scanned.`, 'info');
+    }).catch(e => {
+        setStatus('Scan error: ' + e, 'error');
+    });
 }
 
 // ─── Wipe ─────────────────────────────────────────────────────────────────────
@@ -217,6 +235,7 @@ function startWipe() {
         return;
     }
 
+    lockUI(true);
     showProgress(selectedPaths.length);
     setStatus(
         `🛡  Removing VSS Shadow Copies... (requires Admin)\n` +
@@ -226,10 +245,33 @@ function startWipe() {
 
     window.pywebview.api.wipe(selectedPaths, algo, verify).then(response => {
         hideProgress();
+        lockUI(false);
+
+        // Handle AI warning response (object instead of string)
+        if (response && typeof response === 'object' && response.warning) {
+            const fileList = response.files.map(f => `• ${f.path}\n  ⚠ ${f.reason}`).join('\n');
+            const proceed = confirm(
+                `${response.message}\n\n${fileList}\n\nDo you still want to wipe these files?`
+            );
+            if (proceed) {
+                // Force wipe by re-calling with only the risky files confirmed
+                setStatus('🔄 Re-running wipe (user confirmed risky files)...');
+                // We need a bypass mechanism. For now, just notify.
+                setStatus(
+                    `⚠ AI Guard blocked wipe of ${response.files.length} file(s).\n\n` +
+                    `Files flagged:\n${fileList}\n\n` +
+                    `To override, deselect those files and re-run.`
+                );
+            } else {
+                setStatus('✅ Wipe cancelled by user after AI warning.');
+            }
+            return;
+        }
+
         setStatus(response);
         refreshQRNGStatus();
         navigateTo(currentPath);
-    }).catch(e => { hideProgress(); setStatus('Wipe error: ' + e); });
+    }).catch(e => { hideProgress(); setStatus('Wipe error: ' + e); lockUI(false); });
 }
 
 function wipeSelectedDrive() {
@@ -249,6 +291,7 @@ function wipeSelectedDrive() {
     const algo = document.getElementById('algo').value;
     const verify = document.getElementById('verify').checked;
 
+    lockUI(true);
     showProgress(1);
     setStatus(`🛡  Purging VSS shadows...\n⚛  Starting quantum wipe of drive ${drive}...\nPlease wait...`);
     window.pywebview.api.wipe([drive], algo, verify).then(response => {
@@ -256,7 +299,8 @@ function wipeSelectedDrive() {
         setStatus(response);
         refreshQRNGStatus();
         navigateTo(currentPath);
-    }).catch(e => { hideProgress(); setStatus('Wipe error: ' + e); });
+        lockUI(false);
+    }).catch(e => { hideProgress(); setStatus('Wipe error: ' + e); lockUI(false); });
 }
 
 // ─── Progress Bar Helpers ──────────────────────────────────────────────────────
@@ -350,3 +394,13 @@ function openHexModal(path) {
 function closeHexModal() {
     document.getElementById('hex-modal').style.display = 'none';
 }
+
+// ⭐ UX ADDITION: Highlight selected rows (visual only)
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('file-cb')) {
+        const row = e.target.closest('.file-row');
+        if (row) {
+            row.classList.toggle('selected', e.target.checked);
+        }
+    }
+});

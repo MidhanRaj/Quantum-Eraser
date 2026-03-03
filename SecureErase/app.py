@@ -10,6 +10,10 @@ import subprocess
 import ctypes
 from dotenv import load_dotenv
 
+from SecureErase import ai_guard
+
+ai_guard.load_model()
+
 load_dotenv()
 
 def is_admin():
@@ -607,6 +611,21 @@ class API:
         }
 
     def wipe(self, paths, algorithm='random', verify=False):
+        # ── AI Accidental Deletion Check (BEFORE wipe) ──
+        risky_files = []
+        for path in paths:
+            if os.path.isfile(path):
+                risky, reason = ai_guard.is_risky(path)
+                if risky:
+                    risky_files.append({"path": path, "reason": reason})
+
+        if risky_files:
+            return {
+                "warning": True,
+                "message": "⚠ AI Warning: Frequently used or important files detected.",
+                "files": risky_files
+            }
+
         # ── Phase 5: Kill VSS shadow copies first ─────────────────────────────
         vss_status = kill_vss_shadows()
         logging.info(f"Pre-wipe VSS: {vss_status}")
@@ -664,6 +683,9 @@ class API:
 
 if __name__ == '__main__':
     _init_audit_key()  # Pre-init audit crypto on startup
+    ai_guard.train_model(
+        os.path.join(os.path.dirname(__file__), "ai_data.csv")
+    )
     api = API()
     window = webview.create_window(
         'EraseXpertz — Quantum-Hardened Secure Wipe',

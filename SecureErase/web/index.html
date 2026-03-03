@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EraseXpertz — Quantum-Hardened Secure Wipe</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -14,7 +14,13 @@
 
         <!-- Header -->
         <div class="header-row">
-            <h1><i class="fas fa-atom"></i> EraseXpertz</h1>
+            <div class="hero">
+                <h1>YeetMyData</h1>
+                <p class="hero-sub">
+                    Quantum-Hardened • AI-Assisted • Secure Data Erasure
+                </p>
+            </div>
+
             <div class="quantum-badge" id="quantum-status" title="QRNG Entropy Source">
                 <span class="qbadge-dot" id="qbadge-dot"></span>
                 <span id="qbadge-label">Checking QRNG...</span>
@@ -22,113 +28,148 @@
         </div>
 
         <!-- Admin Warning -->
-        <div id="admin-warning" class="admin-banner" style="display:none;">
-            <div style="flex:1;">
-                <i class="fas fa-exclamation-triangle"></i>
-                Warning: Running without Administrator privileges. VSS Shadow Copy deletion will fail.
-            </div>
-            <button class="btn-sm btn-danger" onclick="relaunchAsAdmin()" style="margin:0;">
-                <i class="fas fa-user-shield"></i> Relaunch as Admin
-            </button>
-        </div>
+     <div id="admin-warning" class="admin-banner" style="display:none;">
+    <div class="admin-text">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>
+            Warning: Running without Administrator privileges.
+            VSS Shadow Copy deletion will fail.
+        </span>
+    </div>
+
+    <button class="btn-sm btn-danger admin-btn" onclick="relaunchAsAdmin()">
+        <i class="fas fa-user-shield"></i> Relaunch as Admin
+    </button>
+</div>
 
         <!-- Main Card -->
         <div class="card">
-            <!-- Drive + Controls Row -->
-            <div class="flex-row space-between" style="align-items:center; flex-wrap:wrap; gap:10px;">
-                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:220px;">
-                    <select id="drive-select" style="flex:1;" onchange="loadFiles()">
-                        <option value="">Loading drives...</option>
-                    </select>
-                    <button class="btn-sm" onclick="refreshDrives()" title="Refresh Drives">
-                        <i class="fas fa-sync-alt"></i>
+
+            <!-- ================= STORAGE EXPLORER ================= -->
+            <div class="section">
+                <h3>Storage Explorer</h3>
+
+                <!-- Drive + Controls -->
+                <div class="flex-row space-between" style="align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:220px;">
+                        <select id="drive-select" style="flex:1;" onchange="loadFiles()">
+                            <option value="">Loading drives...</option>
+                        </select>
+                        <button class="btn-sm" onclick="refreshDrives()" title="Refresh Drives">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+
+                    <div class="storage-controls">
+                        <button onclick="loadFiles()">
+                            <i class="fas fa-folder-open"></i> Load Files
+                        </button>
+
+                        <button onclick="selectAll()">
+                            <i class="fas fa-check-double"></i> All
+                        </button>
+
+                        <button class="btn-scan" onclick="scanSensitive()">
+                            <i class="fas fa-biohazard"></i> Scan Sensitive
+                        </button>
+
+                        <!-- Danger Zone -->
+                       <div class="danger-zone-ui">
+    <button class="btn-danger wipe-selected" onclick="startWipe()">
+        <i class="fas fa-trash-alt"></i> Wipe Selected
+    </button>
+</div>
+
+<button class="btn-danger wipe-drive" onclick="wipeSelectedDrive()">
+    <i class="fas fa-hdd"></i> Wipe Drive
+</button>
+                    </div>
+                </div>
+
+                <!-- Breadcrumb -->
+                <div id="breadcrumb" class="breadcrumb">
+                    <span class="crumb" onclick="navigateTo(currentRoot)">🖥 Root</span>
+                </div>
+
+                <!-- File Table -->
+                <div class="explorer-wrapper">
+                    <table class="file-table">
+                        <thead>
+                            <tr>
+                                <th style="width:30px;">
+                                    <input type="checkbox" id="select-all-cb" onclick="toggleSelectAll()">
+                                </th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Size</th>
+                                <th>Risk</th>
+                            </tr>
+                        </thead>
+                        <tbody id="file-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= WIPE CONFIGURATION ================= -->
+            <div class="section">
+                <h3>Wipe Configuration</h3>
+
+                <div class="flex-row"
+                    style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid #333;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="label-muted">Algorithm:</span>
+                        <select id="algo" style="padding: 4px 8px; font-size: 0.85rem;">
+                            <option value="random">Quantum Random (1-Pass)</option>
+                            <option value="dod">DoD 5220.22-M (3-Pass)</option>
+                            <option value="zero">Zero Fill (1-Pass)</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:6px; margin-left:10px;">
+                        <input type="checkbox" id="verify" checked>
+                        <label for="verify" class="label-muted" style="cursor:pointer;">Verify Wipe</label>
+                    </div>
+
+                    <div style="flex:1;"></div>
+
+                    <button class="btn-audit" onclick="showAuditLogInfo()">
+                        <i class="fas fa-clipboard-list"></i> Audit Log
                     </button>
                 </div>
+            </div>
 
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button onclick="loadFiles()"><i class="fas fa-folder-open"></i> Load Files</button>
-                    <button onclick="selectAll()"><i class="fas fa-check-double"></i> All</button>
-                    <button class="btn-scan" onclick="scanSensitive()" title="Highlight risky files before wiping">
-                        <i class="fas fa-biohazard"></i> Scan Sensitive
-                    </button>
-                    <button class="btn-danger" onclick="startWipe()" title="Wipe selected items">
-                        <i class="fas fa-trash-alt"></i> Wipe Selected
-                    </button>
-                    <button class="btn-danger" onclick="wipeSelectedDrive()" title="Wipe entire drive">
-                        <i class="fas fa-hdd"></i> Wipe Drive
-                    </button>
+            <!-- ================= STATUS & PROGRESS ================= -->
+            <div class="section">
+                <h3>Status &amp; Progress</h3>
+
+                <!-- Status Console -->
+                <div>
+                    <div class="status-header">
+                        <span class="label-muted">
+                            <i class="fas fa-terminal"></i> Status Console
+                        </span>
+                    </div>
+                    <pre id="status">System Ready... Select files to begin.</pre>
+                </div>
+
+                <!-- Progress -->
+                <div id="wipe-progress-container" style="display:none; margin-top:12px;">
+                    <div class="progress-label" id="progress-label">Wiping...</div>
+                    <div class="progress-track">
+                        <div class="progress-bar" id="wipe-progress-bar" style="width:0%"></div>
+                    </div>
+                    <div class="progress-meta" id="progress-meta">0% — 0 / 0 files</div>
+                </div>
+
+                <!-- Risk Legend -->
+                <div class="risk-legend" id="risk-legend" style="display:none;">
+                    <span class="legend-dot high"></span><span>High Risk</span>
+                    <span class="legend-dot medium" style="margin-left:12px;"></span><span>Medium Risk</span>
+                    <span class="legend-dot safe" style="margin-left:12px;"></span><span>Safe</span>
                 </div>
             </div>
 
-            <!-- Wipe Configuration -->
-            <div class="flex-row"
-                style="margin-top:15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid #333;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="label-muted">Algorithm:</span>
-                    <select id="algo" style="padding: 4px 8px; font-size: 0.85rem;">
-                        <option value="random">Quantum Random (1-Pass)</option>
-                        <option value="dod">DoD 5220.22-M (3-Pass)</option>
-                        <option value="zero">Zero Fill (1-Pass)</option>
-                    </select>
-                </div>
-                <div style="display:flex; align-items:center; gap:6px; margin-left:10px;">
-                    <input type="checkbox" id="verify" checked>
-                    <label for="verify" class="label-muted" style="cursor:pointer;">Verify Wipe</label>
-                </div>
-                <div style="flex:1;"></div>
-                <button class="btn-audit" onclick="showAuditLogInfo()">
-                    <i class="fas fa-clipboard-list"></i> Audit Log
-                </button>
-            </div>
-
-            <!-- Status Console -->
-            <div style="margin-top:15px;">
-                <div class="status-header">
-                    <span class="label-muted"><i class="fas fa-terminal"></i> Status Console</span>
-                </div>
-                <pre id="status">System Ready... Select files to begin.</pre>
-            </div>
-
-            <!-- Wipe Progress -->
-            <div id="wipe-progress-container" style="display:none; margin-top:12px;">
-                <div class="progress-label" id="progress-label">Wiping...</div>
-                <div class="progress-track">
-                    <div class="progress-bar" id="wipe-progress-bar" style="width:0%"></div>
-                </div>
-                <div class="progress-meta" id="progress-meta">0% — 0 / 0 files</div>
-            </div>
-
-            <!-- Risk Legend -->
-            <div class="risk-legend" id="risk-legend" style="display:none;">
-                <span class="legend-dot high"></span><span>High Risk</span>
-                <span class="legend-dot medium" style="margin-left:12px;"></span><span>Medium Risk</span>
-                <span class="legend-dot safe" style="margin-left:12px;"></span><span>Safe</span>
-            </div>
-
-            <!-- Breadcrumb -->
-            <div id="breadcrumb" class="breadcrumb">
-                <span class="crumb" onclick="navigateTo(currentRoot)">🖥 Root</span>
-            </div>
-
-            <!-- File Table -->
-            <div class="explorer-wrapper">
-                <table class="file-table">
-                    <thead>
-                        <tr>
-                            <th style="width:30px;">
-                                <input type="checkbox" id="select-all-cb" onclick="toggleSelectAll()">
-                            </th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Size</th>
-                            <th>Risk</th>
-                        </tr>
-                    </thead>
-                    <tbody id="file-tbody"></tbody>
-                </table>
-            </div>
-
-        </div><!-- /.container -->
+        </div><!-- end card -->
 
         <!-- Hex Inspection Modal -->
         <div id="hex-modal" class="modal-overlay" style="display:none;">
@@ -146,5 +187,4 @@
 
         <script src="script.js"></script>
 </body>
-
 </html>
