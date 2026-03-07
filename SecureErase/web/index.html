@@ -33,20 +33,6 @@
             </div>
         </div>
 
-        <!-- Admin Warning -->
-        <div id="admin-warning" class="admin-banner" style="display:none;">
-            <div class="admin-text">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>
-                    Warning: Running without Administrator privileges.
-                    VSS Shadow Copy deletion will fail.
-                </span>
-            </div>
-
-            <button class="btn-sm btn-danger admin-btn" onclick="relaunchAsAdmin()">
-                <i class="fas fa-user-shield"></i> Relaunch as Admin
-            </button>
-        </div>
 
         <!-- Main Card -->
         <div class="card">
@@ -136,14 +122,21 @@
                         <label for="verify" class="label-muted" style="cursor:pointer;">Verify Wipe</label>
                     </div>
 
-                    <div style="flex:1;"></div>
+                    <div id="local-log-toggle"
+                        style="display:none; align-items:center; gap:6px; margin-left:15px; background: rgba(157, 141, 241, 0.05); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(157, 141, 241, 0.1);">
+                        <input type="checkbox" id="store-locally" checked onchange="toggleLocalLogging()">
+                        <label for="store-locally" class="label-muted"
+                            style="cursor:pointer; font-size: 0.85rem; color: var(--primary);">Save Delete Logs
+                            Locally</label>
+                    </div>
 
+                    <div style="flex:1;"></div>
 
                     <button class="btn-audit" onclick="showBlockchainLedger()">
                         <i class="fas fa-link"></i> Blockchain Ledger
                     </button>
-                    <button class="btn-audit" onclick="showAuditLogInfo()" style="margin-left: 8px;">
-                        <i class="fas fa-clipboard-list"></i> PQC Log (Local)
+                    <button class="btn-audit" onclick="showLocalLogs()">
+                        <i class="fas fa-clipboard-list"></i> Audit Logs (Local)
                     </button>
                 </div>
             </div>
@@ -193,8 +186,8 @@
                         <thead>
                             <tr>
                                 <th>File Name</th>
-                                <th>Deletion Time</th>
-                                <th>TX Hash</th>
+                                <th>Execution Time</th>
+                                <th>Algorithm / Status</th>
                             </tr>
                         </thead>
                         <tbody id="blockchain-tbody">
@@ -208,43 +201,77 @@
             </div>
         </div>
 
-        <!-- Wallet Connection Overlay -->
-        <div id="wallet-overlay" class="modal-overlay" style="display:flex; z-index: 1000;">
+        <!-- Authentication Overlay -->
+        <div id="auth-overlay" class="modal-overlay" style="display:none; z-index: 1000;">
             <div class="modal-box" style="max-width: 450px; text-align: center;">
-                <div class="modal-header" style="justify-content: center; border: none;">
-                    <h2 style="margin:0;"><i class="fas fa-wallet"></i> Connect Required</h2>
+                <div id="auth-state-first-run" style="display:none;">
+                    <div class="modal-header" style="justify-content: center; border: none;">
+                        <h2 style="margin:0;"><i class="fas fa-user-plus"></i> Welcome to EraseXpertz</h2>
+                    </div>
+                    <p style="color: var(--text-muted); margin-bottom: 25px;">
+                        This is your first run! Please create a secure local password to protect your data.
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <input type="password" id="create-password" placeholder="New Password"
+                            style="width: 100%; text-align: center; border: 1px solid #444;">
+                        <input type="password" id="confirm-password" placeholder="Confirm Password"
+                            style="width: 100%; text-align: center; border: 1px solid #444;">
+                        <button class="btn-primary" onclick="createAccount()">
+                            <i class="fas fa-check"></i> Create Account
+                        </button>
+                    </div>
                 </div>
-                <p style="color: var(--text-muted); margin-bottom: 25px;">
-                    A blockchain-backed audit trail is mandatory for all data wipes.
-                    Please connect your quantum-secure sub-wallet to proceed.
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <button class="btn-primary" onclick="connectActualMetaMask()"
-                        style="background: #f6851b; color: white; border-color: #f6851b;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg"
-                            style="width: 20px; vertical-align: middle; margin-right: 8px;">
-                        Connect MetaMask Extension
-                    </button>
-                    <div style="margin: 5px 0; color: #444; position: relative;">
-                        <span
-                            style="background: var(--bg-panel); padding: 0 10px; z-index: 1; position: relative;">OR</span>
-                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #333;">
+
+                <div id="auth-state-login" style="display:none;">
+                    <div class="modal-header" style="justify-content: center; border: none;">
+                        <h2 style="margin:0;"><i class="fas fa-shield-alt"></i> Authentication</h2>
+                    </div>
+                    <p style="color: var(--text-muted); margin-bottom: 25px;">
+                        Connect your wallet or login with your local password to proceed.
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Wallet Connect (Mandatory Audit) -->
+                        <button class="btn-primary" onclick="connectActualMetaMask()"
+                            style="background: #f6851b; color: white; border-color: #f6851b;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg"
+                                style="width: 20px; vertical-align: middle; margin-right: 8px;">
+                            Connect MetaMask (Full Audit)
+                        </button>
+
+                        <div style="margin: 10px 0; color: #444; position: relative;">
+                            <span
+                                style="background: var(--bg-panel); padding: 0 10px; z-index: 1; position: relative;">OR</span>
+                            <div
+                                style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #333;">
+                            </div>
+                        </div>
+
+                        <!-- Local Login -->
+                        <div style="display:flex; gap:8px;">
+                            <input type="password" id="login-password" placeholder="Password"
+                                style="flex:1; text-align: center; border: 1px solid #444;">
+                            <button class="btn-primary" onclick="loginWithPassword()">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                        </div>
+
+                        <div style="margin: 10px 0; color: #444; position: relative;">
+                            <span
+                                style="background: var(--bg-panel); padding: 0 10px; z-index: 1; position: relative;">OR</span>
+                            <div
+                                style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #333;">
+                            </div>
+                        </div>
+
+                        <!-- Manual Wallet Connect -->
+                        <div style="display:flex; gap:8px;">
+                            <input type="password" id="wallet-key" placeholder="Private Key"
+                                style="flex:1; text-align: center; border: 1px solid #444;">
+                            <button class="btn-primary" onclick="connectExistingWallet()">
+                                <i class="fas fa-key"></i> Connect
+                            </button>
                         </div>
                     </div>
-                    <button class="btn-primary" onclick="connectNewWallet()">
-                        <i class="fas fa-plus"></i> Create New Temporary Wallet
-                    </button>
-                    <div style="margin: 10px 0; color: #444; position: relative;">
-                        <span
-                            style="background: var(--bg-panel); padding: 0 10px; z-index: 1; position: relative;">OR</span>
-                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #333;">
-                        </div>
-                    </div>
-                    <input type="password" id="wallet-key" placeholder="Enter Private Key (Simulation)"
-                        style="width: 100%; text-align: center; border: 1px solid #444;">
-                    <button class="btn-primary" onclick="connectExistingWallet()">
-                        <i class="fas fa-plug"></i> Connect Existing
-                    </button>
                 </div>
             </div>
         </div>
@@ -263,6 +290,7 @@
             </div>
         </div>
 
+        <script src="threads.js"></script>
         <script src="script.js"></script>
 </body>
 

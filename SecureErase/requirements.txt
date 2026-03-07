@@ -4,3 +4,9 @@ qiskit-ibm-runtime
 cryptography
 pqcrypto
 python-dotenv
+bcrypt
+reportlab
+psutil
+scikit-learn
+joblib
+numpy

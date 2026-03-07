@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Audit Logs — EraseXpertz</title>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --bg-dark: #0a0a0c;
+            --bg-card: #16161a;
+            --text-main: #e0e0e0;
+            --text-muted: #888;
+            --danger: #ff4444;
+            --border: #333;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 0 auto;
+        }
+
+        .btn:hover {
+            background: #00cc6e;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            min-height: 20px;
+        }
+
+        /* Table Styles */
+        .table-container {
+            margin-top: 30px;
+            display: none;
+            /* Hidden until loaded */
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .mono {
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--primary);
+            font-size: 0.85em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"
+        type="application/javascript"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Immutable Audit Ledger</h1>
+            <p class="subtitle">Access blockchain-verified data deletion logs via MetaMask</p>
+
+            <button id="show-logs-btn" class="btn" onclick="requestLogsAccess()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h4l2-9 4 18 2-9h6" />
+                </svg>
+                Show Deletion Logs (0 Sepolia)
+            </button>
+
+            <div id="status">Ready</div>
+        </div>
+
+        <div id="logs-container" class="card table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Execution Time</th>
+                        <th>Algorithm</th>
+                        <th>Wallet</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-tbody">
+                    <!-- Logs injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const btn = document.getElementById('show-logs-btn');
+        const logsContainer = document.getElementById('logs-container');
+        const tbody = document.getElementById('logs-tbody');
+
+        let config = null;
+
+        // Fetch config on load
+        async function fetchConfig() {
+            try {
+                const res = await fetch('/api/config');
+                config = await res.json();
+                console.log("Config loaded:", config);
+            } catch (err) {
+                console.error("Failed to load config:", err);
+                statusEl.innerText = "Error loading configuration. Ensure app is running.";
+                statusEl.style.color = 'var(--danger)';
+                btn.disabled = true;
+            }
+        }
+
+        fetchConfig();
+
+        async function requestLogsAccess() {
+            if (!config) {
+                statusEl.innerText = "Configuration not loaded yet.";
+                return;
+            }
+
+            if (typeof window.ethereum === 'undefined') {
+                statusEl.innerText = "Error: MetaMask extension not detected in this browser.";
+                statusEl.style.color = 'var(--danger)';
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "Connecting...";
+                statusEl.innerText = "Requesting account access...";
+                statusEl.style.color = 'var(--text-muted)';
+                logsContainer.style.display = 'none';
+
+                // 1. Request Account Access
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const address = accounts[0];
+
+                // 2. Switch/Add Network if necessary
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                // We compare to hex representation of Sepolia chain ID: 11155111 -> 0xaa36a7
+                const targetChainHex = config.target_chain_hex.toLowerCase();
+                if (chainId.toLowerCase() !== targetChainHex) {
+                    statusEl.innerText = `Please switch MetaMask to Sepolia Testnet.`;
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: targetChainHex }],
+                        });
+                    } catch (switchError) {
+                        throw new Error("User rejected network switch or Sepolia is not added.");
+                    }
+                }
+
+                // 3. Prepare the access transaction (0 ETH to Contract)
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+
+                statusEl.innerText = "Please confirm the 0 ETH access transaction in MetaMask.";
+                btn.innerText = "Awaiting Signature...";
+
+                const txRequest = {
+                    to: config.contract_address,
+                    value: ethers.utils.parseEther("0.0"),
+                    // A simple access fee transaction doesn't need data unless the contract function is payable
+                    // For simply viewing logs, sending a 0 value tx to the contract is standard
+                };
+
+                const txResponse = await signer.sendTransaction(txRequest);
+
+                statusEl.innerText = `Transaction Sent! Hash: ${txResponse.hash.substring(0, 15)}... Waiting for confirmation.`;
+                btn.innerText = "Confirming...";
+
+                // Wait for 1 confirmation
+                await txResponse.wait(1);
+
+                statusEl.innerText = "Access Granted! Fetching logs...";
+                btn.innerText = "Fetching...";
+
+                // 4. Fetch the logs from the backend API
+                await loadAndDisplayLogs();
+
+            } catch (err) {
+                console.error("Access Request Failed:", err);
+                statusEl.innerText = `Failed: ${err.message || err.code || "Unknown error"}`;
+                statusEl.style.color = 'var(--danger)';
+                btn.disabled = false;
+                btn.innerText = "Show Deletion Logs (0 Sepolia)";
+            }
+        }
+
+        async function loadAndDisplayLogs() {
+            try {
+                const res = await fetch('/api/logs');
+                if (!res.ok) throw new Error("Failed to fetch logs API");
+                const logs = await res.json();
+
+                logsContainer.style.display = 'block';
+
+                if (!logs || logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No blockchain audit logs found for this contract.</td></tr>';
+                } else {
+                    // Sort by time descending (newest first)
+                    logs.sort((a, b) => b.time - a.time);
+
+                    tbody.innerHTML = logs.map(log => `
+                        <tr>
+                            <td>${escapeHtml(log.file)}</td>
+                            <td>${new Date(log.time).toLocaleString()}</td>
+                            <td class="mono">${escapeHtml(log.algo)}</td>
+                            <td class="mono" title="${log.wallet}">${log.wallet.substring(0, 8)}...${log.wallet.substring(38)}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                statusEl.innerText = `Successfully loaded ${logs.length} log(s).`;
+                statusEl.style.color = 'var(--primary)';
+                btn.disabled = false;
+                btn.innerText = "Refresh Logs";
+
+                // Change onclick to just refresh if they already paid
+                btn.onclick = loadAndDisplayLogs;
+
+            } catch (err) {
+                console.error("Log Fetch Error:", err);
+                statusEl.innerText = `Failed to load logs: ${err.message}`;
+                statusEl.style.color = 'var(--danger)';
+                btn.disabled = false;
+                btn.innerText = "Retry Fetch";
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

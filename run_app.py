@@ -9,6 +9,9 @@ try:
     from SecureErase import app
     from SecureErase import ai_guard
 
+    if not app.is_admin():
+        app.relaunch_self_as_admin()
+
     # Train / refresh AI model on startup
     ai_guard.train_model(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), 'SecureErase', 'ai_data.csv')

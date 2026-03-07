@@ -8,17 +8,11 @@ let navigationStack = [];
 // ─── Init ─────────────────────────────────────────────────────────────────────
 window.addEventListener('pywebviewready', () => {
     // Check if wallet is already connected (e.g. backend persist)
-    window.pywebview.api.is_wallet_connected().then(connected => {
-        if (connected) {
-            unlockApp();
-        } else {
-            document.getElementById('wallet-overlay').style.display = 'flex';
-        }
-    });
+    // Removed old unlockApp logic, will be handled by checkAuthStatus
 
     refreshDrives();
     refreshQRNGStatus();
-    checkAdminStatus();
+    checkAuthStatus();
 
     // Listen for drive selection changes
     document.getElementById('drive-select').addEventListener('change', (e) => {
@@ -28,21 +22,6 @@ window.addEventListener('pywebviewready', () => {
     });
 });
 
-// ─── Admin Status ─────────────────────────────────────────────────────────────
-function checkAdminStatus() {
-    window.pywebview.api.check_admin().then(isAdmin => {
-        const banner = document.getElementById('admin-warning');
-        if (!isAdmin) {
-            banner.style.display = 'flex';
-        } else {
-            banner.style.display = 'none';
-        }
-    }).catch(e => console.error("Admin check failed", e));
-}
-
-function relaunchAsAdmin() {
-    window.pywebview.api.relaunch_as_admin();
-}
 
 // ─── Wallet & Blockchain ───────────────────────────────────────────────────────
 function connectNewWallet() {
@@ -73,31 +52,103 @@ function connectExistingWallet() {
     });
 }
 
+function checkAuthStatus(retries = 0) {
+    if (!window.pywebview || !window.pywebview.api) {
+        if (retries < 10) {
+            console.log("API not ready, retrying auth check...");
+            setTimeout(() => checkAuthStatus(retries + 1), 200);
+        }
+        return;
+    }
+
+    window.pywebview.api.get_auth_status().then(status => {
+        if (status.is_logged_in) {
+            unlockApp(status.auth_mode);
+        } else {
+            window.pywebview.api.check_first_run().then(isFirstRun => {
+                // Determine which panel to show FIRST
+                if (isFirstRun) {
+                    document.getElementById('auth-state-first-run').style.display = 'block';
+                    document.getElementById('auth-state-login').style.display = 'none';
+                } else {
+                    document.getElementById('auth-state-first-run').style.display = 'none';
+                    document.getElementById('auth-state-login').style.display = 'block';
+                }
+                // Then show the overlay
+                document.getElementById('auth-overlay').style.display = 'flex';
+            });
+        }
+    }).catch(e => {
+        console.error("Auth status error:", e);
+        if (retries < 5) setTimeout(() => checkAuthStatus(retries + 1), 500);
+    });
+}
+
+function createAccount() {
+    const p1 = document.getElementById('create-password').value;
+    const p2 = document.getElementById('confirm-password').value;
+    if (!p1) return alert("Please enter a password.");
+    if (p1 !== p2) return alert("Passwords do not match.");
+
+    window.pywebview.api.create_account(p1).then(res => {
+        if (res.status === 'success') {
+            unlockApp('password');
+            setStatus("✅ Account Created. Local logging enabled.");
+        }
+    });
+}
+
+function loginWithPassword() {
+    const pass = document.getElementById('login-password').value;
+    if (!pass) return alert("Please enter your password.");
+
+    window.pywebview.api.login(pass).then(res => {
+        if (res.status === 'success') {
+            unlockApp('password');
+            setStatus("✅ Logged in with password.");
+        } else {
+            alert(res.message);
+        }
+    });
+}
+
 function onWalletConnected(address) {
-    document.getElementById('wallet-overlay').style.display = 'none';
+    unlockApp('wallet');
     const badge = document.getElementById('wallet-badge');
     badge.classList.add('connected');
     document.getElementById('wallet-addr').textContent = address.substring(0, 10) + "...";
     setStatus("✅ Wallet Connected: " + address);
 }
 
-function showWalletModal() {
-    // Just toggle info or show disconnect? For now, just show address
-    alert("Connected Address:\n" + document.getElementById('wallet-addr').textContent);
+function unlockApp(mode) {
+    document.getElementById('auth-overlay').style.display = 'none';
+    const logToggle = document.getElementById('local-log-toggle');
+    if (mode === 'password') {
+        logToggle.style.display = 'flex';
+        toggleLocalLogging(); // Ensure backend is in sync with initial checkbox state
+    } else {
+        logToggle.style.display = 'none';
+    }
 }
 
-function unlockApp() {
-    document.getElementById('wallet-overlay').style.display = 'none';
-    // Fetch address if it's already connected in backend but UI doesn't know
-    // (Simpler to just re-run connect if needed, but we'll assume fresh start)
+function toggleLocalLogging() {
+    const enabled = document.getElementById('store-locally').checked;
+    window.pywebview.api.set_local_logging(enabled).then(() => {
+        setStatus(enabled ? "📝 Local logging enabled." : "🚫 Local logging disabled.");
+    });
 }
 
 function showBlockchainLedger() {
-    const modal = document.getElementById('blockchain-modal');
-    modal.style.display = 'flex';
-    const tbody = document.getElementById('blockchain-tbody');
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Fetching immutable records...</td></tr>';
+    // Phase 9 Requirement: Open the browser-based PQC audit bridge
+    // The user will pay 0 Sepolia ETH via their extension to view logs
+    setStatus("🚀 Opening Immutable Audit Ledger in your system browser...");
+    window.pywebview.api.open_audit_page().catch(e => {
+        setStatus('Access Error: ' + e, "error");
+    });
+}
 
+function fetchBlockchainLogs() {
+    const tbody = document.getElementById('blockchain-tbody');
     window.pywebview.api.get_blockchain_logs().then(logs => {
         if (!logs || logs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No records found on-chain.</td></tr>';
@@ -108,7 +159,37 @@ function showBlockchainLedger() {
             <tr>
                 <td>${escapeHtml(log.file)}</td>
                 <td>${new Date(log.time).toLocaleString()}</td>
-                <td style="font-family:var(--font-mono); font-size:0.75rem; color:var(--primary);">${log.tx}</td>
+                <td style="font-family:var(--font-mono); font-size:0.75rem; color:var(--primary);">${escapeHtml(log.algo)}</td>
+            </tr>
+        `).join('');
+    });
+}
+
+function pollBlockchainLogs() {
+    // Simple poll mechanism for the bridge flow
+    setTimeout(() => fetchBlockchainLogs(), 3000);
+}
+
+function showLocalLogs() {
+    const modal = document.getElementById('blockchain-modal'); // Re-use modal structure
+    modal.style.display = 'flex';
+    const title = modal.querySelector('h2');
+    title.innerText = "📜 PQC Encrypted Audit Logs (Local)";
+
+    const tbody = document.getElementById('blockchain-tbody');
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Decrypting quantum-secure vault...</td></tr>';
+
+    window.pywebview.api.retrieve_local_logs().then(logs => {
+        if (!logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No local records found or vault locked.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = logs.map(log => `
+            <tr>
+                <td>${escapeHtml(log.path)}</td>
+                <td>${new Date(log.timestamp).toLocaleString()}</td>
+                <td style="font-family:var(--font-mono); font-size:0.75rem; color:var(--scan);">${escapeHtml(log.status)} (${log.algorithm})</td>
             </tr>
         `).join('');
     });
@@ -301,6 +382,31 @@ function scanSensitive() {
 }
 
 // ─── Wipe ─────────────────────────────────────────────────────────────────────
+let _wipePollInterval = null;
+
+function _startWipePolling(total, algo) {
+    if (_wipePollInterval) clearInterval(_wipePollInterval);
+
+    _wipePollInterval = setInterval(() => {
+        window.pywebview.api.get_wipe_progress().then(state => {
+            if (state.running) {
+                const cur = state.current_item || 0;
+                const tot = state.total_items || total || 0;
+                updateWipeProgress(state.percent, state.filename, cur, tot);
+            } else if (state.result) {
+                clearInterval(_wipePollInterval);
+                _wipePollInterval = null;
+                hideProgress();
+                lockUI(false);
+                finalizeWipe(state.result, algo);
+            }
+        }).catch(err => {
+            console.error("Poll error:", err);
+            clearInterval(_wipePollInterval);
+        });
+    }, 250);
+}
+
 function startWipe() {
     selectedPaths = [];
     document.querySelectorAll('.file-cb:checked').forEach(cb => {
@@ -321,40 +427,109 @@ function startWipe() {
     lockUI(true);
     showProgress(selectedPaths.length);
     setStatus(
-        `🛡  Removing VSS Shadow Copies... (requires Admin)\n` +
+        `🛡  Removing VSS Shadow Copies...\n` +
         `⚛  Running quantum-sourced wipe with [${algo}] on ${selectedPaths.length} item(s)...\n` +
         `Please wait...`
     );
 
     window.pywebview.api.wipe(selectedPaths, algo, verify).then(response => {
-        hideProgress();
-        lockUI(false);
+        if (!response) return;
 
-        // Handle AI warning response (object instead of string)
-        if (response && typeof response === 'object' && response.warning) {
+        if (response.warning) {
+            hideProgress();
+            lockUI(false);
             const fileList = response.files.map(f => `• ${f.path}\n  ⚠ ${f.reason}`).join('\n');
-            const proceed = confirm(
-                `${response.message}\n\n${fileList}\n\nDo you still want to wipe these files?`
-            );
+            const proceed = confirm(`${response.message}\n\n${fileList}\n\nDo you still want to wipe?`);
             if (proceed) {
-                // Force wipe by re-calling with only the risky files confirmed
-                setStatus('🔄 Re-running wipe (user confirmed risky files)...');
-                // We need a bypass mechanism. For now, just notify.
-                setStatus(
-                    `⚠ AI Guard blocked wipe of ${response.files.length} file(s).\n\n` +
-                    `Files flagged:\n${fileList}\n\n` +
-                    `To override, deselect those files and re-run.`
-                );
+                setStatus('🔄 User confirmed risky files. Overriding AI Guard...');
+                lockUI(true);
+                showProgress(selectedPaths.length);
+                window.pywebview.api.bypass_ai_and_wipe(selectedPaths, algo, verify).then(r => {
+                    if (r && r.status === 'pending') {
+                        _startWipePolling(selectedPaths.length, algo);
+                    } else if (r) {
+                        hideProgress(); lockUI(false); finalizeWipe(r, algo);
+                    }
+                });
             } else {
                 setStatus('✅ Wipe cancelled by user after AI warning.');
             }
             return;
         }
 
-        setStatus(response);
-        refreshQRNGStatus();
-        navigateTo(currentPath);
+        if (response.status === 'pending') {
+            _startWipePolling(selectedPaths.length, algo);
+        } else {
+            hideProgress();
+            lockUI(false);
+            finalizeWipe(response, algo);
+        }
     }).catch(e => { hideProgress(); setStatus('Wipe error: ' + e); lockUI(false); });
+}
+
+function finalizeWipe(response, algo) {
+    if (typeof response === 'string') {
+        setStatus(response);
+        return;
+    }
+    if (response.error) {
+        setStatus("❌ " + response.message);
+        return;
+    }
+
+    let statusMsg = (response.message || "") + (response.vss ? ("\n" + response.vss) : "");
+    if (response.drive_type === "SSD" || response.drive_type === "NVMe") {
+        const se = response.ssd_erase;
+        if (se && se.success) {
+            const method = se.opal_supported ? "TCG Opal Cryptographic Erase ✅" :
+                response.drive_type === "NVMe" ? "NVMe Secure Erase ✅" : "ATA Secure Erase ✅";
+            statusMsg += `\n⚡ ${response.drive_type} detected — ${method} (bypasses wear leveling)`;
+        } else if (se && !se.success) {
+            statusMsg += `\n⚠ ${response.drive_type} detected — hardware erase unavailable (needs Admin). File-level overwrite + TRIM applied.`;
+        } else {
+            statusMsg += `\n🔁 ${response.drive_type} detected — TRIM pipeline applied.`;
+        }
+    }
+
+    setStatus(statusMsg);
+    refreshQRNGStatus();
+    navigateTo(currentPath);
+
+    if (response.blockchain_items && response.blockchain_items.length > 0) {
+        statusMsg += `\n⛓ ${response.blockchain_items.length} unapproved blockchain transaction(s) pending.`;
+    }
+
+    if (response.report_path) {
+        setStatus(statusMsg + "\n📄 Certificate Generated: " + response.report_path);
+    }
+}
+
+// ─── MetaMask Blockchain Signing ───────────────────────────────────────────────
+async function signBlockchainTransactions(txList, algo) {
+    setStatus(`✍ Sending ${txList.length} wipe event(s) to MetaMask for blockchain audit...
+Your browser will open — please approve each transaction.`);
+    let signed = 0, failed = 0;
+    for (let i = 0; i < txList.length; i++) {
+        const tx = txList[i];
+        try {
+            setStatus(`✍ Signing transaction ${i + 1} of ${txList.length}...
+Check your browser for the MetaMask popup.`);
+            const result = await window.pywebview.api.sign_transaction(tx);
+            if (result && result.status === 'pending') {
+                await new Promise(resolve => setTimeout(resolve, 4000));
+                signed++;
+            } else { failed++; }
+        } catch (err) {
+            console.error(`TX ${i + 1} signing error:`, err);
+            failed++;
+        }
+    }
+    if (failed === 0) {
+        setStatus(`✅ All ${signed} transaction(s) sent to blockchain.
+🔗 Check the Blockchain Ledger to verify your audit trail.`);
+    } else {
+        setStatus(`⚠ Blockchain signing: ${signed} succeeded, ${failed} failed.`);
+    }
 }
 
 function wipeSelectedDrive() {
@@ -378,11 +553,9 @@ function wipeSelectedDrive() {
     showProgress(1);
     setStatus(`🛡  Purging VSS shadows...\n⚛  Starting quantum wipe of drive ${drive}...\nPlease wait...`);
     window.pywebview.api.wipe([drive], algo, verify).then(response => {
-        hideProgress();
-        setStatus(response);
-        refreshQRNGStatus();
-        navigateTo(currentPath);
-        lockUI(false);
+        if (response && response.status === 'pending') {
+            _startWipePolling(1, algo);
+        }
     }).catch(e => { hideProgress(); setStatus('Wipe error: ' + e); lockUI(false); });
 }
 

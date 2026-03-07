@@ -81,12 +81,12 @@
             const btn = document.getElementById('connect-btn');
 
             if (typeof ethers === 'undefined') {
-                status.innerText = "Error: ethers.js library failed to load. Check your internet connection.";
+                status.innerText = "Error: ethers.js failed to load.";
                 return;
             }
 
             if (typeof window.ethereum === 'undefined') {
-                status.innerText = "Error: MetaMask not detected in this browser.";
+                status.innerText = "Error: MetaMask not detected.";
                 return;
             }
 
@@ -94,35 +94,43 @@
                 btn.innerText = "Connecting...";
                 btn.disabled = true;
 
-                // Request accounts
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 const address = accounts[0];
 
-                status.innerText = "Wallet detected. Requesting signature...";
-
-                // Sign a challenge to verify identity
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const signer = provider.getSigner();
-                const message = "Authorize EraseXpertz Secure Audit Log Integration\nTimestamp: " + new Date().toISOString();
-                const signature = await signer.signMessage(message);
 
-                status.innerText = "Verified! Transmitting to Desktop App...";
+                // Check if we are signing a login challenge or a transaction
+                const urlParams = new URLSearchParams(window.location.search);
+                const txData = urlParams.get('txData');
 
-                // Simple navigation callback to avoid any fetch/CORS issues
-                const callbackUrl = `${window.location.origin}/?address=${address}&sig=${signature}`;
-                console.log("Transmitting to:", callbackUrl);
+                if (txData) {
+                    status.innerText = "Transaction detected. Requesting signature...";
+                    const tx = JSON.parse(decodeURIComponent(txData));
+                    const sentTx = await signer.sendTransaction(tx);
+                    status.innerText = "Transaction Sent! Hash: " + sentTx.hash;
+                    setTimeout(() => window.close(), 2000);
+                } else {
+                    status.innerText = "Verifying identity...";
+                    const message = "Authorize EraseXpertz Secure Audit Log Integration\nTimestamp: " + new Date().toISOString();
+                    const signature = await signer.signMessage(message);
 
-                // Direct navigation is the most reliable bridge
-                window.location.href = callbackUrl;
+                    status.innerText = "Verified! Returning to app...";
+                    window.location.href = `${window.location.origin}/?address=${address}&sig=${signature}`;
+                }
             } catch (err) {
                 console.error("Bridge Error:", err);
-                status.innerText = "Error: " + err.message + " (Check if the desktop app is running)";
-                btn.innerText = "Retry Connection";
+                status.innerText = "Error: " + err.message;
+                btn.innerText = "Retry";
                 btn.disabled = false;
             }
         }
 
         document.getElementById('connect-btn').onclick = connect;
+        // Auto-trigger if txData is present
+        if (new URLSearchParams(window.location.search).get('txData')) {
+            connect();
+        }
     </script>
 </body>
 
