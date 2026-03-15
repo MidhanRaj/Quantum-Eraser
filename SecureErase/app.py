@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import string
 import webview
 import datetime
@@ -1217,6 +1218,44 @@ class BlockchainManager:
         
         self.account = None
         self.current_address = None
+        
+        # === Pending Logs Support ===
+        self.pending_logs = []
+        self._load_pending()
+
+    def _load_pending(self):
+        log_file = os.path.join(os.path.dirname(__file__), "logs", "pending_blockchain_logs.json")
+        if os.path.exists(log_file):
+            try:
+                with open(log_file, 'r') as f:
+                    self.pending_logs = json.load(f)
+            except Exception as e:
+                logging.error(f"Failed to load pending logs: {e}")
+
+    def _save_pending(self):
+        log_dir = os.path.join(os.path.dirname(__file__), "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        log_file = os.path.join(log_dir, "pending_blockchain_logs.json")
+        try:
+            with open(log_file, 'w') as f:
+                json.dump(self.pending_logs, f)
+        except Exception as e:
+            logging.error(f"Failed to save pending logs: {e}")
+
+    def add_pending(self, file_name: str, algo: str):
+        log_entry = {
+            "fileName": file_name,
+            "algo": algo,
+            "timestamp": int(time.time() * 1000)
+        }
+        self.pending_logs.append(log_entry)
+        self._save_pending()
+        logging.info(f"Added pending log: {file_name}")
+
+    def clear_pending(self):
+        self.pending_logs = []
+        self._save_pending()
+        logging.info("Cleared pending logs")
 
     def connect_wallet(self, private_key=None):
         """Handle manual account creation or connection from a private key."""
@@ -1286,44 +1325,7 @@ class BlockchainManager:
             logging.error(f"Blockchain retrieval failed: {e}")
             return []
 
-    def prepare_access_transaction(self):
-        """Prepare a 0-value transaction as an 'access fee' to view logs."""
-        try:
-            if not self.current_address: return None
-            
-            tx = {
-                'from': self.current_address,
-                'to': self.contract_address,
-                'value': 0,
-                'gas': 50000,
-                'nonce': self.w3.eth.get_transaction_count(self.current_address),
-                'chainId': 11155111 # Sepolia
-            }
-            return tx
-        except Exception as e:
-            logging.error(f"Failed to prepare access transaction: {e}")
-            return None
 
-    def get_logs(self):
-        """Retrieve all logs directly from the smart contract (Instant Retrieval)."""
-        if not self.contract_address or self.contract_address == "0x0000000000000000000000000000000000000000":
-            return []
-        
-        try:
-            # logs is a list of Entry structs
-            raw_logs = self.contract.functions.getAllLogs().call()
-            formatted = []
-            for item in raw_logs:
-                formatted.append({
-                    "file": item[0],
-                    "time": item[1] * 1000, # convert to JS timestamp
-                    "wallet": item[2],
-                    "algo": item[3]
-                })
-            return formatted
-        except Exception as e:
-            logging.error(f"Blockchain retrieval failed: {e}")
-            return []
 
 # Globally initialize BlockchainManager
 blockchain_ledger = BlockchainManager()
@@ -1333,6 +1335,10 @@ blockchain_ledger = BlockchainManager()
 class MetaMaskBridgeHandler(BaseHTTPRequestHandler):
     """Handles callback from the system browser for MetaMask auth."""
     app_instance = None # To be set at runtime
+
+    def end_headers(self):
+        self.send_header("Content-Security-Policy", "script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none';")
+        super().end_headers()
 
     def log_message(self, format, *args):
         return # Silence logs
@@ -1373,6 +1379,23 @@ class MetaMaskBridgeHandler(BaseHTTPRequestHandler):
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(json.dumps(logs).encode())
+                return
+                
+            if parsed_url.path == '/api/pending':
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps(blockchain_ledger.pending_logs).encode())
+                return
+            
+            if parsed_url.path == '/api/clear_pending':
+                blockchain_ledger.clear_pending()
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok"}).encode())
                 return
                 
             if parsed_url.path == '/api/config':
@@ -1589,10 +1612,7 @@ class API:
         return {"status": "pending", "message": "Opening MetaMask bridge in your browser..."}
 
     def request_audit_access(self):
-        if self.auth_mode == 'wallet':
-            tx = blockchain_ledger.prepare_access_transaction()
-            if tx:
-                return self.sign_transaction(tx)
+        # No transaction needed to view logs — open directly
         return {"status": "success", "message": "Access granted."}
 
     def open_audit_page(self):
@@ -1804,9 +1824,12 @@ class API:
                 tx_data = [] # we'll send it back as "blockchain_items" matching original UI expectations
                 if self.auth_mode == 'wallet':
                     for path in paths:
+                        file_name = os.path.basename(path)
+                        blockchain_ledger.add_pending(file_name, algorithm)
+                        
                         # Add raw metadata so JS ethers.js can construct the transaction
                         tx_data.append({
-                            "fileName": os.path.basename(path),
+                            "fileName": file_name,
                             "algo": algorithm
                         })
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blockchain Audit Logs — EraseXpertz</title>
+    <title>Blockchain Audit Ledger — EraseXpertz</title>
     <style>
         :root {
             --primary: #00ff88;
@@ -13,314 +13,557 @@
             --text-main: #e0e0e0;
             --text-muted: #888;
             --danger: #ff4444;
-            --border: #333;
+            --warning: #ffaa00;
+            --border: #2a2a33;
+            --font-mono: 'Courier New', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
             background: var(--bg-dark);
             color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             min-height: 100vh;
+            padding: 32px 20px;
         }
 
         .container {
-            width: 100%;
-            max-width: 800px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            letter-spacing: 0.03em;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-size: 0.9rem;
+        }
+
+        .chain-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.25);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            color: var(--primary);
+            margin-top: 10px;
+        }
+
+        .chain-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.3
+            }
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 20px;
+            text-align: center;
+        }
+
+        .stat-card .num {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: var(--font-mono);
+        }
+
+        .stat-card .label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-card.pending .num {
+            color: var(--warning);
         }
 
         .card {
             background: var(--bg-card);
-            padding: 30px;
-            border-radius: 16px;
             border: 1px solid var(--border);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 14px;
+            padding: 24px;
             margin-bottom: 20px;
         }
 
-        h1 {
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .card-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .count-pill {
+            background: rgba(0, 255, 136, 0.12);
             color: var(--primary);
-            margin-top: 0;
-            margin-bottom: 10px;
-            text-align: center;
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 0.78rem;
+            font-family: var(--font-mono);
         }
 
-        p.subtitle {
-            text-align: center;
+        .count-pill.warn {
+            background: rgba(255, 170, 0, 0.12);
+            color: var(--warning);
+        }
+
+        .pending-item {
+            background: rgba(255, 170, 0, 0.06);
+            border-left: 3px solid var(--warning);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .pending-item .fname {
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        .pending-item .algo {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--warning);
+            white-space: nowrap;
+        }
+
+        .pending-item .ts {
+            font-size: 0.75rem;
             color: var(--text-muted);
-            margin-bottom: 30px;
+            white-space: nowrap;
         }
 
-        .btn {
+        .sign-btn {
             background: var(--primary);
             color: #000;
             border: none;
-            padding: 12px 24px;
+            padding: 10px 22px;
             border-radius: 8px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
+            font-size: 0.88rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin: 0 auto;
+            gap: 6px;
         }
 
-        .btn:hover {
-            background: #00cc6e;
-            transform: translateY(-2px);
+        .sign-btn:hover {
+            opacity: 0.85;
         }
 
-        .btn:disabled {
-            background: #333;
-            color: #666;
+        .sign-btn:disabled {
+            opacity: 0.4;
             cursor: not-allowed;
-            transform: none;
         }
 
-        #status {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 0.9rem;
+        .refresh-btn {
+            background: transparent;
+            border: 1px solid var(--border);
             color: var(--text-muted);
-            min-height: 20px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
         }
 
-        /* Table Styles */
-        .table-container {
-            margin-top: 30px;
-            display: none;
-            /* Hidden until loaded */
+        .refresh-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .table-wrap {
             overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-
-        th,
-        td {
-            text-align: left;
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border);
+            font-size: 0.88rem;
         }
 
         th {
-            background: rgba(255, 255, 255, 0.05);
+            text-align: left;
+            padding: 10px 14px;
             color: var(--text-muted);
-            font-weight: 600;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 13px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            vertical-align: top;
         }
 
         tr:last-child td {
             border-bottom: none;
         }
 
-        .mono {
-            font-family: 'Courier New', Courier, monospace;
-            color: var(--primary);
-            font-size: 0.85em;
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 30px;
+        .mono {
+            font-family: var(--font-mono);
+            color: var(--primary);
+            font-size: 0.82rem;
+        }
+
+        .wallet-cell {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
             color: var(--text-muted);
-            font-style: italic;
+        }
+
+        .fname-cell {
+            word-break: break-all;
+            max-width: 260px;
+        }
+
+        .ts-cell {
+            white-space: nowrap;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .empty span {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        #status-bar {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        #status-bar.error {
+            color: var(--danger);
+        }
+
+        #status-bar.ok {
+            color: var(--primary);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(0, 255, 136, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #sign-status {
+            margin-top: 10px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"
-        type="application/javascript"></script>
 </head>
 
 <body>
     <div class="container">
+        <div class="header">
+            <h1>⛓ Immutable Audit Ledger</h1>
+            <p>Blockchain-verified deletion logs — Sepolia Testnet</p>
+            <div class="chain-badge"><span class="dot"></span> Live · Sepolia</div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="num" id="stat-confirmed">—</div>
+                <div class="label">Confirmed On-Chain</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="num" id="stat-pending">—</div>
+                <div class="label">Pending Signature</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" id="stat-total">—</div>
+                <div class="label">Total Deletion Events</div>
+            </div>
+        </div>
+
+        <!-- Pending -->
+        <div class="card" id="pending-card" style="display:none;">
+            <div class="card-header">
+                <h2>⏳ Awaiting Signature <span class="count-pill warn" id="pending-count">0</span></h2>
+                <button class="sign-btn" id="sign-btn" onclick="signPending()">✍ Sign &amp; Submit All (0 ETH)</button>
+            </div>
+            <div id="pending-list"></div>
+            <div id="sign-status"></div>
+        </div>
+
+        <!-- Confirmed -->
         <div class="card">
-            <h1>Immutable Audit Ledger</h1>
-            <p class="subtitle">Access blockchain-verified data deletion logs via MetaMask</p>
-
-            <button id="show-logs-btn" class="btn" onclick="requestLogsAccess()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12h4l2-9 4 18 2-9h6" />
-                </svg>
-                Show Deletion Logs (0 Sepolia)
-            </button>
-
-            <div id="status">Ready</div>
+            <div class="card-header">
+                <h2>✅ Confirmed Deletion Logs <span class="count-pill" id="confirmed-count">0</span></h2>
+                <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File / Path</th>
+                            <th>Timestamp</th>
+                            <th>Algorithm</th>
+                            <th>Operator Wallet</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-tbody">
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty"><span class="spinner"></span> Loading logs from chain...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="logs-container" class="card table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>File Name</th>
-                        <th>Execution Time</th>
-                        <th>Algorithm</th>
-                        <th>Wallet</th>
-                    </tr>
-                </thead>
-                <tbody id="logs-tbody">
-                    <!-- Logs injected here -->
-                </tbody>
-            </table>
-        </div>
+        <div id="status-bar">Connecting to Sepolia node...</div>
     </div>
 
     <script>
-        const statusEl = document.getElementById('status');
-        const btn = document.getElementById('show-logs-btn');
-        const logsContainer = document.getElementById('logs-container');
-        const tbody = document.getElementById('logs-tbody');
-
         let config = null;
 
-        // Fetch config on load
-        async function fetchConfig() {
+        function setStatus(msg, type) {
+            const bar = document.getElementById('status-bar');
+            bar.textContent = msg;
+            bar.className = type || '';
+        }
+
+        async function loadAll() {
+            setStatus('Fetching from Sepolia node...');
             try {
-                const res = await fetch('/api/config');
-                config = await res.json();
-                console.log("Config loaded:", config);
-            } catch (err) {
-                console.error("Failed to load config:", err);
-                statusEl.innerText = "Error loading configuration. Ensure app is running.";
-                statusEl.style.color = 'var(--danger)';
-                btn.disabled = true;
+                const [cfgRes, logsRes, pendRes] = await Promise.all([
+                    fetch('/api/config'), fetch('/api/logs'), fetch('/api/pending')
+                ]);
+                if (!cfgRes.ok) throw new Error('Server not reachable');
+                config = await cfgRes.json();
+                const logs = await logsRes.json();
+                const pending = await pendRes.json();
+                renderConfirmed(logs);
+                renderPending(pending);
+                document.getElementById('stat-confirmed').textContent = logs.length;
+                document.getElementById('stat-pending').textContent = pending.length;
+                document.getElementById('stat-total').textContent = logs.length + pending.length;
+                const addr = config.contract_address;
+                const short = addr ? addr.slice(0, 8) + '…' + addr.slice(-6) : 'not set';
+                setStatus('Last synced: ' + new Date().toLocaleTimeString() + ' · Contract: ' + short, 'ok');
+            } catch (e) {
+                setStatus('Error: ' + e.message, 'error');
             }
         }
 
-        fetchConfig();
-
-        async function requestLogsAccess() {
-            if (!config) {
-                statusEl.innerText = "Configuration not loaded yet.";
+        function renderConfirmed(logs) {
+            document.getElementById('confirmed-count').textContent = logs.length;
+            const tbody = document.getElementById('logs-tbody');
+            if (!logs.length) {
+                tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span>📭</span>No confirmed records yet.<br>Sign pending items above to record them on-chain.</div></td></tr>';
                 return;
             }
+            tbody.innerHTML = logs.map(l => '<tr>' +
+                '<td class="fname-cell">' + esc(l.file) + '</td>' +
+                '<td class="ts-cell">' + new Date(l.time).toLocaleString() + '</td>' +
+                '<td class="mono">' + esc(l.algo) + '</td>' +
+                '<td class="wallet-cell">' + (l.wallet ? l.wallet.slice(0, 6) + '…' + l.wallet.slice(-4) : '—') + '</td>' +
+                '</tr>').join('');
+        }
 
-            if (typeof window.ethereum === 'undefined') {
-                statusEl.innerText = "Error: MetaMask extension not detected in this browser.";
-                statusEl.style.color = 'var(--danger)';
-                return;
-            }
+        function renderPending(pending) {
+            document.getElementById('pending-count').textContent = pending.length;
+            document.getElementById('pending-card').style.display = pending.length ? 'block' : 'none';
+            if (!pending.length) return;
+            document.getElementById('pending-list').innerHTML = pending.map(p => {
+                const name = esc(p.fileName || p.file_name || '—');
+                const algo = esc(p.algo || '—');
+                const ts = p.timestamp ? new Date(p.timestamp).toLocaleString() : '—';
+                return '<div class="pending-item">' +
+                    '<span class="fname">' + name + '</span>' +
+                    '<span class="algo">' + algo + '</span>' +
+                    '<span class="ts">' + ts + '</span>' +
+                    '</div>';
+            }).join('');
+        }
 
+        // Returns ABI-encoded string slot: [32-byte length][data padded to 32-byte boundary]
+        function encodeAbiString(str) {
+            const bytes = new TextEncoder().encode(str);
+            const byteLen = bytes.length;
+            const lenHex = byteLen.toString(16).padStart(64, '0');
+            const rawHex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+            // Pad to nearest 32-byte (64 hex char) boundary
+            const padded = rawHex.padEnd(Math.ceil(byteLen / 32) * 64, '0');
+            return lenHex + padded;
+        }
+
+        // Returns the ABI-encoded byte length of a string (padded slot size)
+        function abiStringSlotSize(str) {
+            const byteLen = new TextEncoder().encode(str).length;
+            return 32 + Math.ceil(byteLen / 32) * 32; // length word + padded data
+        }
+
+        async function signPending() {
+            if (!window.ethereum) { alert('MetaMask not detected in this browser.'); return; }
+            if (!config || !config.contract_address) { alert('Contract address not configured.'); return; }
+            const btn = document.getElementById('sign-btn');
+            const stat = document.getElementById('sign-status');
             try {
                 btn.disabled = true;
-                btn.innerText = "Connecting...";
-                statusEl.innerText = "Requesting account access...";
-                statusEl.style.color = 'var(--text-muted)';
-                logsContainer.style.display = 'none';
+                btn.innerHTML = '<span class="spinner"></span> Requesting accounts...';
+                stat.style.color = 'var(--text-muted)';
 
-                // 1. Request Account Access
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const address = accounts[0];
 
-                // 2. Switch/Add Network if necessary
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                // We compare to hex representation of Sepolia chain ID: 11155111 -> 0xaa36a7
-                const targetChainHex = config.target_chain_hex.toLowerCase();
-                if (chainId.toLowerCase() !== targetChainHex) {
-                    statusEl.innerText = `Please switch MetaMask to Sepolia Testnet.`;
-                    try {
+                // Ensure Sepolia
+                try {
+                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xaa36a7' }] });
+                } catch (sw) {
+                    if (sw.code === 4902) {
                         await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: targetChainHex }],
+                            method: 'wallet_addEthereumChain', params: [{
+                                chainId: '0xaa36a7', chainName: 'Sepolia',
+                                rpcUrls: ['https://rpc.sepolia.org'],
+                                nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 }
+                            }]
                         });
-                    } catch (switchError) {
-                        throw new Error("User rejected network switch or Sepolia is not added.");
                     }
                 }
 
-                // 3. Prepare the access transaction (0 ETH to Contract)
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = provider.getSigner();
+                const pendRes = await fetch('/api/pending');
+                const pending = await pendRes.json();
+                if (!pending.length) { stat.textContent = 'Nothing to sign.'; return; }
 
-                statusEl.innerText = "Please confirm the 0 ETH access transaction in MetaMask.";
-                btn.innerText = "Awaiting Signature...";
+                let signed = 0;
+                for (let i = 0; i < pending.length; i++) {
+                    const item = pending[i];
+                    const fileName = item.fileName || item.file_name || '';
+                    const algo = item.algo || '';
+                    btn.innerHTML = '<span class="spinner"></span> Signing ' + (i + 1) + ' / ' + pending.length + '...';
+                    stat.textContent = 'Awaiting MetaMask for: ' + fileName;
 
-                const txRequest = {
-                    to: config.contract_address,
-                    value: ethers.utils.parseEther("0.0"),
-                    // A simple access fee transaction doesn't need data unless the contract function is payable
-                    // For simply viewing logs, sending a 0 value tx to the contract is standard
-                };
-
-                const txResponse = await signer.sendTransaction(txRequest);
-
-                statusEl.innerText = `Transaction Sent! Hash: ${txResponse.hash.substring(0, 15)}... Waiting for confirmation.`;
-                btn.innerText = "Confirming...";
-
-                // Wait for 1 confirmation
-                await txResponse.wait(1);
-
-                statusEl.innerText = "Access Granted! Fetching logs...";
-                btn.innerText = "Fetching...";
-
-                // 4. Fetch the logs from the backend API
-                await loadAndDisplayLogs();
-
-            } catch (err) {
-                console.error("Access Request Failed:", err);
-                statusEl.innerText = `Failed: ${err.message || err.code || "Unknown error"}`;
-                statusEl.style.color = 'var(--danger)';
-                btn.disabled = false;
-                btn.innerText = "Show Deletion Logs (0 Sepolia)";
-            }
-        }
-
-        async function loadAndDisplayLogs() {
-            try {
-                const res = await fetch('/api/logs');
-                if (!res.ok) throw new Error("Failed to fetch logs API");
-                const logs = await res.json();
-
-                logsContainer.style.display = 'block';
-
-                if (!logs || logs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No blockchain audit logs found for this contract.</td></tr>';
-                } else {
-                    // Sort by time descending (newest first)
-                    logs.sort((a, b) => b.time - a.time);
-
-                    tbody.innerHTML = logs.map(log => `
-                        <tr>
-                            <td>${escapeHtml(log.file)}</td>
-                            <td>${new Date(log.time).toLocaleString()}</td>
-                            <td class="mono">${escapeHtml(log.algo)}</td>
-                            <td class="mono" title="${log.wallet}">${log.wallet.substring(0, 8)}...${log.wallet.substring(38)}</td>
-                        </tr>
-                    `).join('');
+                    // ABI-encode addLog(string,string)
+                    // Selector: keccak256('addLog(string,string)') = 0xa273079a
+                    // Layout: [sel][offset1=0x40][offset2=0x40+slot1size][enc(fileName)][enc(algo)]
+                    const fnEnc = encodeAbiString(fileName);
+                    const off1 = 64; // always 0x40 — two offsets (2×32 bytes)
+                    const off2 = off1 + abiStringSlotSize(fileName); // offset of algo data
+                    const data = '0xa273079a' +
+                        off1.toString(16).padStart(64, '0') +
+                        off2.toString(16).padStart(64, '0') +
+                        fnEnc + encodeAbiString(algo);
+                    try {
+                        await window.ethereum.request({
+                            method: 'eth_sendTransaction', params: [{
+                                from: accounts[0], to: config.contract_address,
+                                value: '0x0', gas: '0x7A120', data: data
+                            }]
+                        });
+                        signed++;
+                    } catch (txErr) {
+                        if (txErr.code === 4001) { stat.textContent = 'Cancelled at item ' + (i + 1); break; }
+                        stat.textContent = 'Error on item ' + (i + 1) + ': ' + txErr.message;
+                    }
                 }
-
-                statusEl.innerText = `Successfully loaded ${logs.length} log(s).`;
-                statusEl.style.color = 'var(--primary)';
+                if (signed > 0) {
+                    await fetch('/api/clear_pending');
+                    stat.style.color = 'var(--primary)';
+                    stat.textContent = '✅ ' + signed + ' transaction(s) submitted. Reloading in 15s after confirmation...';
+                    setTimeout(loadAll, 15000);
+                }
+            } catch (e) {
+                stat.style.color = 'var(--danger)';
+                stat.textContent = 'Error: ' + e.message;
+            } finally {
                 btn.disabled = false;
-                btn.innerText = "Refresh Logs";
-
-                // Change onclick to just refresh if they already paid
-                btn.onclick = loadAndDisplayLogs;
-
-            } catch (err) {
-                console.error("Log Fetch Error:", err);
-                statusEl.innerText = `Failed to load logs: ${err.message}`;
-                statusEl.style.color = 'var(--danger)';
-                btn.disabled = false;
-                btn.innerText = "Retry Fetch";
+                btn.innerHTML = '✍ Sign &amp; Submit All (0 ETH)';
             }
         }
 
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
+        function esc(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
+
+        window.onload = loadAll;
     </script>
 </body>
 
