@@ -8,14 +8,13 @@
         body {
             background: #0a0a0c;
             color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            text-align: center;
         }
 
         .card {
@@ -25,6 +24,7 @@
             border: 1px solid #333;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             max-width: 400px;
+            text-align: center;
         }
 
         h1 {
@@ -47,12 +47,6 @@
             font-weight: bold;
             cursor: pointer;
             margin-top: 20px;
-            transition: all 0.3s;
-        }
-
-        .btn:hover {
-            background: #00cc6e;
-            transform: translateY(-2px);
         }
 
         .status {
@@ -66,71 +60,30 @@
 <body>
     <div class="card">
         <h1>MetaMask Bridge</h1>
-        <p>Connect your desktop MetaMask extension to authorize data erasure audit logs.</p>
-
-        <button id="connect-btn" class="btn">Connect MetaMask</button>
-
+        <p>Connect your desktop MetaMask extension to authorize deletion logs.</p>
+        <button id="connect-btn" class="btn" onclick="connect()">Connect MetaMask</button>
         <div id="status" class="status">Waiting for connection...</div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"
-        type="application/javascript"></script>
     <script>
         async function connect() {
             const status = document.getElementById('status');
             const btn = document.getElementById('connect-btn');
-
-            if (typeof ethers === 'undefined') {
-                status.innerText = "Error: ethers.js failed to load.";
-                return;
-            }
-
-            if (typeof window.ethereum === 'undefined') {
-                status.innerText = "Error: MetaMask not detected.";
-                return;
-            }
-
+            if (!window.ethereum) return status.innerText = "Error: MetaMask not detected.";
             try {
                 btn.innerText = "Connecting...";
                 btn.disabled = true;
-
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 const address = accounts[0];
-
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = provider.getSigner();
-
-                // Check if we are signing a login challenge or a transaction
-                const urlParams = new URLSearchParams(window.location.search);
-                const txData = urlParams.get('txData');
-
-                if (txData) {
-                    status.innerText = "Transaction detected. Requesting signature...";
-                    const tx = JSON.parse(decodeURIComponent(txData));
-                    const sentTx = await signer.sendTransaction(tx);
-                    status.innerText = "Transaction Sent! Hash: " + sentTx.hash;
-                    setTimeout(() => window.close(), 2000);
-                } else {
-                    status.innerText = "Verifying identity...";
-                    const message = "Authorize EraseXpertz Secure Audit Log Integration\nTimestamp: " + new Date().toISOString();
-                    const signature = await signer.signMessage(message);
-
-                    status.innerText = "Verified! Returning to app...";
-                    window.location.href = `${window.location.origin}/?address=${address}&sig=${signature}`;
-                }
+                status.innerText = "Authorized! Returning to app...";
+                window.location.href = `${window.location.origin}/callback?address=${address}`;
             } catch (err) {
-                console.error("Bridge Error:", err);
                 status.innerText = "Error: " + err.message;
                 btn.innerText = "Retry";
                 btn.disabled = false;
             }
         }
-
-        document.getElementById('connect-btn').onclick = connect;
-        // Auto-trigger if txData is present
-        if (new URLSearchParams(window.location.search).get('txData')) {
-            connect();
-        }
+        // Auto-trigger if returning from a transaction or specific state
+        if (new URLSearchParams(window.location.search).get('txData')) connect();
     </script>
 </body>
 

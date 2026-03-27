@@ -30,30 +30,36 @@
 
 ### Installation
 
-1. **Clone the Repository**
+1. **Clone the Repository** (if not already done)
    ```bash
    git clone https://github.com/MidhanRaj/Quantum-Eraser.git
    cd Quantum-Eraser
    ```
 
 2. **Install Dependencies**
+   It is recommended to use a virtual environment:
    ```bash
+   python -m venv venv
+   .\venv\Scripts\activate  # Windows
    pip install -r requirements.txt
    ```
 
+   *Note: `pqcrypto` is an optional dependency for Kyber encryption. If installation fails on Windows, the app will automatically fall back to AES-256-GCM.*
+
 3. **Setup Environment (Optional)**
-   Create a `.env` file in the root directory if you wish to use a specific contract address:
+   Create a `.env` file in the root directory:
    ```env
    WIPELOG_CONTRACT_ADDRESS=0x7c1B9A...f0Ba68
+   IBM_QUANTUM_TOKEN=your_token_here
    ```
 
 ---
 
 ## 💻 How to Run
 
-To launch the application with full administrator privileges (required for VSS and low-level drive access):
+To launch the application, run the main entry point with **Administrator privileges** (required for low-level drive access and VSS management):
 
-```bash
+```powershell
 python run_app.py
 ```
 

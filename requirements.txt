@@ -1,0 +1,13 @@
+pywebview
+web3
+eth-account
+python-dotenv
+bcrypt
+psutil
+cryptography
+qiskit
+qiskit-ibm-runtime
+scikit-learn
+joblib
+numpy
+pandas
