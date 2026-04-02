@@ -1,4 +1,5 @@
-.env
+# .env is now included per user request
+
 ibm_token.txt
 __pycache__/
 *.pyc
